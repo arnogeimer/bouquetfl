@@ -45,7 +45,7 @@ This project can simulate a wide range of common consumer hardware from:
 - **Intel Core**
 - **AMD Ryzen, EPYC & Athlon**
 
-📂 See the full [GPU list](hardwareconf/gpus.csv) and [CPU list](hardwareconf/cpus.csv) for all supported profiles.  
+📂 See the full [GPU list](bouquetfl/hardwareconf/gpus.csv) and [CPU list](bouquetfl/hardwareconf/cpus.csv) for all supported profiles.  
 
 Each simulated client process enforces limits (cores, threads, memory, GPU scheduling) to approximate the chosen hardware.  
 
@@ -128,6 +128,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
