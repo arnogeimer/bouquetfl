@@ -75,7 +75,7 @@ This project simulates a wide variety of client hardware profiles **by programma
 All constraints are applied at runtime so that multiple, heterogeneous “virtual clients” can be emulated on a single machine.
 
 ### CPU
-* **Frequency capping** – Uses [`cpupower`](https://linux.die.net/man/1/cpupower) to temporarily set the CPU’s maximum clock (`-u`) and minimum clock (`-d`) before launching a client.  
+* **Frequency capping** – Uses [`cpupower`](https://linux.die.net/man/1/cpupower) to temporarily set the CPU’s maximum clock (`-u`) and minimum clock (`-d`) during training.  
 * **Core limitation** – Reduces the number of CPU cores the client can effectively use by controlling the number of **DataLoader workers** in the training loop.
 
 ### RAM
@@ -128,6 +128,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
