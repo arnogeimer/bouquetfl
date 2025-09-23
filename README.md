@@ -73,8 +73,8 @@ We provide experiment setups for:
 
 ## ⚙️ How It Works
 
-This project simulates a wide variety of client hardware profiles **by programmatically constraining local system resources** before starting each [Flower](https://flower.dev/) federated client.  
-All constraints are applied at runtime so that multiple, heterogeneous “virtual clients” can be emulated on a single machine.
+This project simulates a wide variety of client hardware profiles **by programmatically constraining local system resources** during the training of each [Flower](https://flower.dev/) federated client.  
+All constraints are applied at runtime so that multiple, heterogeneous “virtual clients” can be successively emulated on a single machine.
 
 ### CPU
 * **Frequency capping** – Uses [`cpupower`](https://linux.die.net/man/1/cpupower) to temporarily set the CPU’s maximum clock (`-u`) and minimum clock (`-d`) during training.  
@@ -112,6 +112,7 @@ All constraints are applied at runtime so that multiple, heterogeneous “virtua
 Note: All these constraints are runtime-only—they simulate weaker hardware but cannot exceed the capabilities of the physical machine.
 
 ## 🗺️ Roadmap
+- Add **timekeeping** to record and showcase how long each client configuration takes to complete training and communication.
 - Add **location simulation** (to model upload/download latency).  
 - Support **parallel client spawning** (multiple clients at once).
 - Add **mobile devices** (e.g., phones, Raspberry Pi, etc.) as available options.
@@ -130,6 +131,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
