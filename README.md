@@ -31,7 +31,7 @@ This enables federated learning experiments that reflect a more realistic hardwa
 - [Flower 1.20.0](https://flower.dev/)  
 - [flwr-datasets 0.5.0](https://flower.dev/docs/datasets.html)
 - [nvidia-smi](https://developer.nvidia.com/system-management-interface)
-- [Nvidia Multi-Processor Service](https://docs.nvidia.com/deploy/mps/index.html) capable GPU (Volta+)
+- [Nvidia Multi-Processor Service](https://docs.nvidia.com/deploy/mps/index.html) capable GPU (Volta+, i.e. GeForce GTX 16 series and after)
 - Root access (`sudo`) for simulating hardware restrictions  
 
 
@@ -130,6 +130,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
