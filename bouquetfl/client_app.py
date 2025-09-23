@@ -70,12 +70,10 @@ class FlowerClient(NumPyClient):
     ) -> None:
         self.client_id = client_id
         self.num_examples = 1
-        self.gpu_name: str = ""
-        self.cpu_name: str = ""
-        self.ram_size: int = 8
-        self.current_cores: int = 80
-        self.model_load_path: str = "params.h5"
-        self.model_save_path: str = f"model_client_{self.client_id}.h5"
+        self.gpu_name: str = "GeForce 210"
+        self.cpu_name: str = "Ryzen 3 1200"
+        self.ram_size: int = 2
+        self.current_cores: int = 10240
 
     # def fit(self, ins: FitIns) -> FitRes:
     def fit(self, parameters_original) -> FitRes:
@@ -89,7 +87,7 @@ class FlowerClient(NumPyClient):
         env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
 
         start_mps()
-        # We run trainer.py in a separate process with systemd-run set CUDA_MPS_ACTIVE_THREAD_PERCENTAGE.
+        # We run trainer.py in a separate process with systemd-run using set CUDA_MPS_ACTIVE_THREAD_PERCENTAGE.
         # Anything else (CPU throttling, RAM limiting, GPU memory and clock limiting) could be done without a separate process.
         # Theoretically, one could implement ones own model in cuda/triton, physically setting the grid on which the model is allowed to run.
         # This way, one could limit the GPU usage without MPS. However, this would require a lot of work and is not implemented here.

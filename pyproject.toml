@@ -59,6 +59,11 @@ clientapp = "bouquetfl.client_app:app"
 num-server-rounds = 3
 fraction-fit = 1
 local-epochs = 1
+experiment = "cifar100"
+model = "resnet18"              # model architecture or LLM, optional
+num_clients = 10                # number of federated clients
+batch_size = 32                 # training batch size
+learning_rate = 0.01 
 
 # Default federation to use when running the app
 [tool.flwr.federations]
