@@ -1,4 +1,4 @@
-# 💐 BouquetFL: Federated Hardware Simulation with Flower 💐
+# 💐 bouquetfl: Federated Hardware Simulation with Flower 💐
 
 Simulate heterogeneous client hardware in **federated learning**, all on a single machine.  
 This framework allows you to mimic clients with limited CPU, GPU, and RAM resources, enabling research into how federated learning behaves on lower-grade hardware without needing actual diverse devices.  
@@ -131,6 +131,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
