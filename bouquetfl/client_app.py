@@ -74,6 +74,8 @@ class FlowerClient(NumPyClient):
         self.cpu_name: str = "Ryzen 3 1200"
         self.ram_size: int = 2
         self.current_cores: int = 10240
+        self.global_model_load_path: str = ""
+        self.model_save_path: str = f"./bouquetfl/checkpoints/model_client_{client_id}.npz"
 
     # def fit(self, ins: FitIns) -> FitRes:
     def fit(self, parameters_original) -> FitRes:
@@ -81,7 +83,7 @@ class FlowerClient(NumPyClient):
         # parameters_original = ins.parameters
         ndarrays_original = parameters_to_ndarrays(parameters_original)
         np.savez(
-            "./bouquetfl/checkpoints/params.npz", *ndarrays_original
+            "./bouquetfl/checkpoints/global_params.npz", *ndarrays_original
         )  # multiple arrays
 
         env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
@@ -100,15 +102,15 @@ class FlowerClient(NumPyClient):
                 "--scope",
                 "-p",
                 f"MemoryMax={self.ram_size}G",
-                "uv",
+                "uv", # <--- Change this to "python3" or corresponding if you don't have uv installed
                 "run",
                 "./bouquetfl/trainer.py",
                 "--experiment",
                 "cifar100",
                 "--client_id",
                 f"{self.client_id}",
-                "--model_load_path",
-                self.model_load_path,
+                "--global_model_load_path",
+                self.global_model_load_path,
                 "--model_save_path",
                 self.model_save_path,
                 "--gpu_name",
@@ -126,9 +128,9 @@ class FlowerClient(NumPyClient):
         child.wait()
         try:
             ndarrays_updated = np.load(
-                "./bouquetfl/checkpoints/params_updated.npz", allow_pickle=True
+                self.model_save_path, allow_pickle=True
             )
-            os.remove("./bouquetfl/checkpoints/params_updated.npz")
+            os.remove(self.model_save_path)
             # Serialize ndarray's into a Parameters object
             parameters_updated = ndarrays_to_parameters(ndarrays_updated)
             # Build and return response
@@ -173,7 +175,7 @@ gpus = [
     "GeForce 210",
 ]
 
-ram_sizes = [1, 0.5, 0.25]
+ram_sizes = [1, 0.5, 0.25] # in GB
 for i in range(len(gpus)):
     print(f"Starting client {i} with GPU {gpus[i]}")
     x = FlowerClient(i)

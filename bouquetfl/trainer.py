@@ -28,7 +28,7 @@ parser.add_argument(
 )
 parser.add_argument("--client_id", type=int, default=0, help="Client ID.")
 parser.add_argument(
-    "--model_load_path",
+    "--global_model_load_path",
     type=str,
     default="model.pth",
     help="Path to load the global model.",
@@ -181,22 +181,23 @@ def reset_all_limits():
 def train_model():
     experiment = args.experiment
     client_id = args.client_id
-    model_load_path = args.model_load_path
+    global_model_load_path = args.global_model_load_path
     model_save_path = args.model_save_path
 
     model = flower_baseline.get_model()
     try:
-        model_parameters = np.load("./bouquetfl/checkpoints/params.npz", allow_pickle=True)
+        model_parameters = np.load("./bouquetfl/checkpoints/global_params.npy", allow_pickle=True)
     except FileNotFoundError:
         model_parameters = (
             flower_baseline.get_initial_parameters()
         )
+    #model_parameters = [model_parameters[key] for key in model_parameters.keys()]
     model_parameters = parameters_to_ndarrays(model_parameters)
-    time.sleep(0.5)
     set_gpu_limit(args.gpu_name)
     num_cpu_cores = set_cpu_limit(args.cpu_name)
     # set_ram_limit(args.ram_size)
     # resource_utils.start_collection()
+    time.sleep(0.5)
     start_data_load_time = timeit.default_timer()
     trainloader = flower_baseline.load_data(client_id, num_workers=num_cpu_cores)
     data_load_time = timeit.default_timer() - start_data_load_time
@@ -219,7 +220,10 @@ def train_model():
     # np.savez(f"./bouquetfl/checkpoints/resources_client_{client_id}.npz", resources)
     # print(f"Resources used: {resources}")
     reset_all_limits()
-    np.savez(f"./bouquetfl/checkpoints/params_updated_{client_id}.npz", *model_parameters)
+    if not model_save_path:
+        np.savez(f"./bouquetfl/checkpoints/params_updated_{client_id}.npz", *model_parameters)
+    else:
+        np.savez(model_save_path, *model_parameters)
 
 
 train_model()
