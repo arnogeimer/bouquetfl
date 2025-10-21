@@ -12,9 +12,13 @@ password = getpass.getpass(
 )
 
 
+#####################################
+############# Auxiliary #############
+#####################################
+
+
 def run(cmd):
     command = " ".join(cmd)
-    # print(">> " + command)
     os.system("echo %s | %s" % (password, command))
 
 
@@ -67,7 +71,6 @@ def show_power_limits(gpu_index: int):
 
 
 def lock_gpu_clocks(gpu_index: int, min_mhz: int, max_mhz: int):
-    # Requires sudo; only supported on Volta+.
     cmd = [
         "sudo -S",
         "nvidia-smi",
@@ -118,43 +121,6 @@ def get_current_gpu_info():
     }
 
 
-def enable_persistence():
-    # Optional: keeps driver state loaded; helpful for NVML operations
-    cmd = ["sudo -S", "nvidia-smi", "-pm", "1"]
-    out = run(cmd)
-    print(out.stdout or out.stderr)
-
-
-def nvml_lock_app_clocks(gpu_index: int, mem_mhz: int, graphics_mhz: int):
-    """Try to lock application clocks via NVML using pynvml (needs root on many systems)."""
-    ### FLAG: DOES REQUIRE SUDO EXECUTION ###
-    try:
-        import pynvml
-    except ImportError:
-        print("pynvml not installed. `pip install nvidia-ml-py3`")
-        return
-    pynvml.nvmlInit()
-    try:
-        h = pynvml.nvmlDeviceGetHandleByIndex(gpu_index)
-        # Prefer GPU locked clocks if available (Volta+). Fallback to applications clocks.
-        try:
-            fn = getattr(pynvml, "nvmlDeviceSetGpuLockedClocks", None)
-            if fn is not None:
-                fn(h, graphics_mhz, graphics_mhz)
-                print(
-                    f"Locked GPU clocks at {graphics_mhz} MHz via NVML (nvmlDeviceSetGpuLockedClocks)."
-                )
-            else:
-                pynvml.nvmlDeviceSetApplicationsClocks(h, mem_mhz, graphics_mhz)
-                print(
-                    f"Set application clocks mem={mem_mhz} MHz, graphics={graphics_mhz} MHz."
-                )
-        finally:
-            pynvml.nvmlShutdown()
-    except Exception as e:
-        print("NVML clock lock failed:", e)
-
-
 def get_gpu_info(gpu_name: str):
     gpu_info = None
     with open("./bouquetfl/hardwareconf/gpus.csv") as file:
@@ -177,32 +143,43 @@ def get_gpu_info(gpu_name: str):
     return gpu_info
 
 
-#####################################
-############# RAM tools #############
-#####################################
+def set_physical_gpu_limits(gpu_name: str):
+    gpu_info = get_gpu_info(gpu_name)
+    if not gpu_info:
+        raise ValueError(f"GPU {gpu_name} not found in database.")
+    current_gpu_info = get_current_gpu_info()
 
-import resource
+    if gpu_info["memory"] > int(current_gpu_info["memory"]):
+        raise ValueError(
+            f"GPU {gpu_name} has more memory ({gpu_info['memory']} GB) than the current GPU ({current_gpu_info['memory']} GB)."
+        )
+    if gpu_info["clock speed"] > int(current_gpu_info["clock speed"]):
+        raise ValueError(
+            f"GPU {gpu_name} has a higher clock speed ({gpu_info['clock speed']} MHz) than the current GPU ({current_gpu_info['clock speed']} MHz)."
+        )
+    if gpu_info["memory speed"] > int(current_gpu_info["memory speed"]):
+        raise ValueError(
+            f"GPU {gpu_name} has a higher memory speed ({gpu_info['memory speed']} MHz) than the current GPU ({current_gpu_info['memory speed']} MHz)."
+        )
 
+    set_gpu_memory_limit(gpu_info["memory"], 0)
+    print(f"Set GPU memory limit to {gpu_info['memory']} GB")
 
-def limit_ram(maxsize: float):
-    "Sets memory limit of the process to <maxsize> GB"
-    _, hard = resource.getrlimit(resource.RLIMIT_AS)
-    resource.setrlimit(resource.RLIMIT_AS, (maxsize * (1024**3), hard))
+    lock_gpu_clocks(0, int(gpu_info["clock speed"]), int(gpu_info["clock speed"]))
+    print(f"Set GPU clock speed to {gpu_info['clock speed']} MHz")
 
-
-def reset_ram_limit():
-    resource.setrlimit(
-        resource.RLIMIT_AS, (resource.RLIM_INFINITY, resource.RLIM_INFINITY)
+    lock_gpu_memory_clocks(
+        0, int(gpu_info["memory speed"]), int(gpu_info["memory speed"])
     )
+    print(f"Set GPU memory speed to {gpu_info['memory speed']} MHz")
 
 
 #####################################
 ############# CPU tools #############
 #####################################
 
-
 def set_cpu_limit(value: int):
-    "Sets clock speed of the process to <value> MHz"
+    "Sets clock speed of the process to <value> GHz"
     cmd = [
         "sudo -S",
         "cpupower",
@@ -214,22 +191,34 @@ def set_cpu_limit(value: int):
     ]
     run(cmd)
 
+def set_cpu_limits(cpu_name: str):
+    cpu_info = get_cpu_info(cpu_name)
+    if not cpu_info:
+        raise ValueError(f"CPU {cpu_name} not found in database.")
+    current_cpu_info = get_current_cpu_info()
 
-def reset_cpu_limit():
-    # IMPORTANT: FIND CURRENT MIN MAX WITH >>>`cpupower frequency-info`
-    # Output should be something like: hardware limits: 800 MHz - 3.60 GHz
-    MIN = 0.8
-    MAX = 3.6
+    if cpu_info["cores"] > int(current_cpu_info["cores"]):
+        raise ValueError(
+            f"CPU {cpu_name} has more cores ({cpu_info["cores"]}) than the current CPU ({current_cpu_info['cores']})."
+        )
+    if cpu_info["turbo clock"] > int(current_cpu_info["clock speed"]):
+        raise ValueError(
+            f"CPU {cpu_name} has a higher clock speed ({cpu_info['turbo clock']} MHz) than the current CPU ({current_cpu_info['clock speed']} MHz)."
+        )
+
+    set_cpu_limit(int(cpu_info["turbo clock"]))
     cmd = [
         "sudo -S",
         "cpupower",
         "frequency-set",
-        "-d",
-        f"{MIN}GHz",
+        "-g",
+        "performance",
         "-u",
-        f"{MAX}GHz",
+        f"{cpu_info['turbo clock']}GHz",
     ]
     run(cmd)
+    print(f"Set CPU clock speed to {cpu_info['turbo clock']} MHz")
+    return cpu_info["cores"]
 
 
 def get_cpu_info(cpu_name: str):
@@ -264,3 +253,28 @@ def get_current_cpu_info():
     cpu_info["cores"] = psutil.cpu_count(logical=False)
     cpu_info["clock speed"] = psutil.cpu_freq().max
     return cpu_info
+
+
+def reset_cpu_limit():
+    # IMPORTANT: FIND CURRENT MIN MAX WITH >>>`cpupower frequency-info`
+    # Output should be something like: hardware limits: 800 MHz - 3.60 GHz
+    MIN = 0.8
+    MAX = get_current_cpu_info()["clock speed"] / 1000.0
+    cmd = [
+        "sudo -S",
+        "cpupower",
+        "frequency-set",
+        "-d",
+        f"{MIN}GHz",
+        "-u",
+        f"{MAX}GHz",
+    ]
+    run(cmd)
+
+
+def reset_all_limits():
+    reset_cpu_limit()
+    reset_gpu_memory_limit(0)
+    reset_gpu_clocks(0)
+    reset_gpu_memory_clocks(0)
+    print("Reset memory limit and clock speeds to default")

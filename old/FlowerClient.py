@@ -16,9 +16,16 @@ import numpy as np
 import power_clock_tools as pct
 import torch
 from flwr.client import Client
-from flwr.common import (Code, EvaluateIns, EvaluateRes, FitIns, FitRes,
-                         Status, ndarrays_to_parameters,
-                         parameters_to_ndarrays)
+from flwr.common import (
+    Code,
+    EvaluateIns,
+    EvaluateRes,
+    FitIns,
+    FitRes,
+    Status,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 
 from .data import data_utils
 

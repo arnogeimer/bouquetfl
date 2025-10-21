@@ -1,7 +1,11 @@
 import torchvision
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import (DirichletPartitioner, LinearPartitioner,
-                                       SizePartitioner, SquarePartitioner)
+from flwr_datasets.partitioner import (
+    DirichletPartitioner,
+    LinearPartitioner,
+    SizePartitioner,
+    SquarePartitioner,
+)
 from torch.utils.data import DataLoader
 
 partitioner = SizePartitioner(

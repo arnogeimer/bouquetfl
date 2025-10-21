@@ -10,12 +10,16 @@ import torch.nn as nn
 import torchvision
 import tqdm
 import yaml
-from data.cuda_vision import CUDA_VisionDataSet
+from bouquetfl.data.cuda_vision import CUDA_VisionDataSet
 from datasets import Dataset
 from flwr.common.typing import NDArrays
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import (DirichletPartitioner, LinearPartitioner,
-                                       SizePartitioner, SquarePartitioner)
+from flwr_datasets.partitioner import (
+    DirichletPartitioner,
+    LinearPartitioner,
+    SizePartitioner,
+    SquarePartitioner,
+)
 from torch.utils.data import DataLoader
 
 

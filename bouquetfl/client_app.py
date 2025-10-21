@@ -7,16 +7,23 @@ import time
 import h5py
 import numpy as np
 import pandas as pd
-import power_clock_tools as pct
+from bouquetfl import power_clock_tools as pct
 import torch
 from flwr.client import ClientApp, NumPyClient
-from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
-                         FitRes, Status, ndarrays_to_parameters,
-                         parameters_to_ndarrays)
+from flwr.common import (
+    Code,
+    Context,
+    EvaluateIns,
+    EvaluateRes,
+    FitIns,
+    FitRes,
+    Status,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 
 from bouquetfl.data import cifar100
-from bouquetfl.task import (Net, get_weights, load_data, set_weights, test,
-                            train)
+from bouquetfl.task import Net, get_weights, load_data, set_weights, test, train
 
 logger = logging.getLogger(__name__)
 import os
@@ -75,10 +82,12 @@ class FlowerClient(NumPyClient):
         self.ram_size: int = 2
         self.current_cores: int = 10240
         self.global_model_load_path: str = ""
-        self.model_save_path: str = f"./bouquetfl/checkpoints/model_client_{client_id}.npz"
+        self.model_save_path: str = (
+            f"./bouquetfl/checkpoints/model_client_{client_id}.npz"
+        )
 
     # def fit(self, ins: FitIns) -> FitRes:
-    def fit(self, parameters_original) -> FitRes:
+    def fit(self, parameters_original, ins: FitIns) -> FitRes:
         # Deserialize parameters to NumPy ndarray's
         # parameters_original = ins.parameters
         ndarrays_original = parameters_to_ndarrays(parameters_original)
@@ -102,7 +111,7 @@ class FlowerClient(NumPyClient):
                 "--scope",
                 "-p",
                 f"MemoryMax={self.ram_size}G",
-                "uv", # <--- Change this to "python3" or corresponding if you don't have uv installed
+                "uv",  # <--- Change this to "python3" or corresponding if you don't have uv installed
                 "run",
                 "./bouquetfl/trainer.py",
                 "--experiment",
@@ -117,8 +126,6 @@ class FlowerClient(NumPyClient):
                 f"{self.gpu_name}",
                 "--cpu_name",
                 f"{self.cpu_name}",
-                "--ram_size",
-                f"{self.ram_size}",
             ],
             env=env,
         )
@@ -127,9 +134,7 @@ class FlowerClient(NumPyClient):
 
         child.wait()
         try:
-            ndarrays_updated = np.load(
-                self.model_save_path, allow_pickle=True
-            )
+            ndarrays_updated = np.load(self.model_save_path, allow_pickle=True)
             os.remove(self.model_save_path)
             # Serialize ndarray's into a Parameters object
             parameters_updated = ndarrays_to_parameters(ndarrays_updated)
@@ -161,21 +166,18 @@ def client_fn(context: Context):
     # Return Client instance
     return FlowerClient(client_id=context.node_id).to_client()
 
-
-"""
 # Flower ClientApp
 app = ClientApp(
     client_fn,
 )
-"""
 
+'''
 gpus = [
     # "GeForce RTX 3070",
-    # "GeForce GTX 1660 SUPER",
-    "GeForce 210",
+    "GeForce GTX 1660 SUPER",
 ]
+ram_sizes = [1, 0.5, 0.25]  # in GB
 
-ram_sizes = [1, 0.5, 0.25] # in GB
 for i in range(len(gpus)):
     print(f"Starting client {i} with GPU {gpus[i]}")
     x = FlowerClient(i)
@@ -187,17 +189,4 @@ for i in range(len(gpus)):
     x.current_cores = 10240
     parameters = cifar100.get_initial_parameters()
     x.fit(parameters)
-
-
-"""
-
-start_mps()
-env = create_cuda_restricted_env("GeForce RTX 3050 8 GB", 80)
-subprocess.run(
-    [
-        "uv",
-        "run",
-        "./bouquetfl/tester.py",
-    ],
-    env=env,
-)"""
+'''
