@@ -6,7 +6,7 @@ import timeit
 import numpy as np
 from bouquetfl import power_clock_tools as pct
 import torch
-from flwr.common.parameter import parameters_to_ndarrays
+from flwr.common.parameter import parameters_to_ndarrays, ndarrays_to_parameters
 
 import bouquetfl.resource_utils as resource_utils
 from bouquetfl.data import data_utils
@@ -35,7 +35,7 @@ parser.add_argument(
     help="Path to load the global model.",
 )
 parser.add_argument(
-    "--model_save_path",
+    "--local_model_save_path",
     type=str,
     default="client_model.npz",
     help="Path to save the local model.",
@@ -92,17 +92,18 @@ else:
 def train_model():
     client_id = args.client_id
     global_model_load_path = args.global_model_load_path
-    model_save_path = args.model_save_path
+    local_model_save_path = args.local_model_save_path
 
     model = flower_baseline.get_model()
     try:
-        model_parameters = np.load(
-            "./bouquetfl/checkpoints/global_params.npy", allow_pickle=True
+        ndarrays_original = np.load(
+            "./bouquetfl/checkpoints/global_params.npz", allow_pickle=True
         )
+        ndarrays_original = [ndarrays_original[key] for key in ndarrays_original]
     except FileNotFoundError:
         model_parameters = flower_baseline.get_initial_parameters()
+        ndarrays_original = parameters_to_ndarrays(model_parameters)
     # model_parameters = [model_parameters[key] for key in model_parameters.keys()]
-    model_parameters = parameters_to_ndarrays(model_parameters)
     pct.set_physical_gpu_limits(args.gpu_name)
     num_cpu_cores = pct.set_cpu_limit(args.cpu_name)
     # set_ram_limit(args.ram_size)
@@ -114,15 +115,15 @@ def train_model():
     print(f"Data loading time: {data_load_time} seconds")
 
     start_train_time = timeit.default_timer()
-    flower_baseline.ndarrays_to_model(model, model_parameters)
+    flower_baseline.ndarrays_to_model(model, ndarrays_original)
     flower_baseline.train(
         model=model,
         trainloader=trainloader,
-        epochs=25,
+        epochs=1,
         device="cuda" if torch.cuda.is_available() else "cpu",
     )
 
-    model_parameters = flower_baseline.ndarrays_from_model(model)
+    ndarrays_new = flower_baseline.ndarrays_from_model(model)
     train_time = timeit.default_timer() - start_train_time
 
     print(f"Training time: {train_time} seconds")
@@ -130,12 +131,15 @@ def train_model():
     # np.savez(f"./bouquetfl/checkpoints/resources_client_{client_id}.npz", resources)
     # print(f"Resources used: {resources}")
     pct.reset_all_limits()
-    if not model_save_path:
+    np.savez(
+            f"./bouquetfl/checkpoints/params_updated_{client_id}.npz", *ndarrays_new
+        )
+    '''if not local_model_save_path:
         np.savez(
-            f"./bouquetfl/checkpoints/params_updated_{client_id}.npz", *model_parameters
+            f"./bouquetfl/checkpoints/params_updated_{client_id}.npz", *ndarrays_new
         )
     else:
-        np.savez(model_save_path, *model_parameters)
+        np.savez(local_model_save_path, *ndarrays_new)'''
 
 
 train_model()

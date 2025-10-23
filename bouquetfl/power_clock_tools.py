@@ -178,20 +178,7 @@ def set_physical_gpu_limits(gpu_name: str):
 ############# CPU tools #############
 #####################################
 
-def set_cpu_limit(value: int):
-    "Sets clock speed of the process to <value> GHz"
-    cmd = [
-        "sudo -S",
-        "cpupower",
-        "frequency-set",
-        "-g",
-        "performance",
-        "-u",
-        f"{value}GHz",
-    ]
-    run(cmd)
-
-def set_cpu_limits(cpu_name: str):
+def set_cpu_limit(cpu_name: str):
     cpu_info = get_cpu_info(cpu_name)
     if not cpu_info:
         raise ValueError(f"CPU {cpu_name} not found in database.")
@@ -206,7 +193,6 @@ def set_cpu_limits(cpu_name: str):
             f"CPU {cpu_name} has a higher clock speed ({cpu_info['turbo clock']} MHz) than the current CPU ({current_cpu_info['clock speed']} MHz)."
         )
 
-    set_cpu_limit(int(cpu_info["turbo clock"]))
     cmd = [
         "sudo -S",
         "cpupower",

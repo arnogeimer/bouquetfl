@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from bouquetfl import power_clock_tools as pct
 import torch
-from flwr.client import ClientApp, NumPyClient
+from flwr.client import ClientApp, Client
 from flwr.common import (
     Code,
     Context,
@@ -67,7 +67,7 @@ def stop_mps():
 
 
 # Define Flower Client and client_fn
-class FlowerClient(NumPyClient):
+class FlowerClient(Client):
     def __init__(
         self,
         client_id: int,
@@ -79,18 +79,17 @@ class FlowerClient(NumPyClient):
         self.ram_size: int = 2
         self.current_cores: int = 10240
         self.global_model_load_path: str = ""
-        self.model_save_path: str = (
-            f"./bouquetfl/checkpoints/model_client_{client_id}.npz"
+        self.local_model_save_path: str = (
+            f"./bouquetfl/checkpoints/params_updated_{client_id}.npz"
         )
 
     # def fit(self, ins: FitIns) -> FitRes:
-    def fit(self, parameters_original, ins: FitIns) -> FitRes:
+    def fit(self, ins: FitIns) -> FitRes:
         # Deserialize parameters to NumPy ndarray's
-        #ndarrays_original = parameters_to_ndarrays(parameters_original)
-        ndarrays_original = parameters_original
+        ndarrays_original = parameters_to_ndarrays(ins.parameters)
         np.savez(
             "./bouquetfl/checkpoints/global_params.npz", *ndarrays_original
-        )  # multiple arrays
+        )
 
         env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
 
@@ -117,8 +116,8 @@ class FlowerClient(NumPyClient):
                 f"{self.client_id}",
                 "--global_model_load_path",
                 self.global_model_load_path,
-                "--model_save_path",
-                self.model_save_path,
+                "--local_model_save_path",
+                self.local_model_save_path,
                 "--gpu_name",
                 f"{self.gpu_name}",
                 "--cpu_name",
@@ -131,21 +130,24 @@ class FlowerClient(NumPyClient):
 
         child.wait()
         try:
-            ndarrays_updated = np.load(self.model_save_path, allow_pickle=True)
-            os.remove(self.model_save_path)
+            ndarrays_new = np.load(self.local_model_save_path, allow_pickle=True)
+            ndarrays_new = [ndarrays_new[key] for key in ndarrays_new]
+            os.remove(self.local_model_save_path)
             # Serialize ndarray's into a Parameters object
-            parameters_updated = ndarrays_to_parameters(ndarrays_updated)
+            #parameters_updated = ndarrays_to_parameters(ndarrays_updated)
             # Build and return response
             status = Status(code=Code.OK, message="Success")
             logging.info(f"Client {self.client_id} successfully trained.")
 
         except FileNotFoundError:
             logging.info(
-                f"Model file {self.model_save_path} not found. Training on client {self.client_id} might have failed."
+                f"Model file {self.local_model_save_path} not found. Training on client {self.client_id} might have failed."
             )
             status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
             parameters_updated = None
-
+        parameters_updated = ndarrays_to_parameters(ndarrays_new)
+        #print("HERE    >>>>>>>",ndarrays_new, self.num_examples, {})
+        #return ndarrays_new, self.num_examples, {}
         return FitRes(
             status=status,
             parameters=parameters_updated,
@@ -153,23 +155,30 @@ class FlowerClient(NumPyClient):
             metrics={"client_id": self.client_id},
         )
 
-    def evaluate(self, parameters, config):
+    def evaluate(self, ins: EvaluateIns):
         from bouquetfl.data import cifar100 as flower_baseline
         testset = flower_baseline.load_global_test_data()
         model = flower_baseline.get_model()
-        ndarrays = parameters_to_ndarrays(parameters)
+        ndarrays = parameters_to_ndarrays(ins.parameters)
         flower_baseline.ndarrays_to_model(model, ndarrays)
         loss, accuracy = flower_baseline.test(
             model=model,
             testloader=testset,
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
-        return loss, len(self.valloader.dataset), {"accuracy": accuracy}
+        status = Status(code=Code.OK, message="Success")
+        return EvaluateRes(
+            status=status,
+            loss=loss,
+            num_examples=self.num_examples,
+            metrics={"accuracy": accuracy}
+        )
 
 
 def client_fn(context: Context):
     # Return Client instance
-    return FlowerClient(client_id=context.node_id).to_client()
+    print(context)
+    return FlowerClient(client_id=context.node_config['partition-id']).to_client()
 
 # Flower ClientApp
 app = ClientApp(
