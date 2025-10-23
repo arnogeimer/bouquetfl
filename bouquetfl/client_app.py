@@ -22,9 +22,6 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 
-from bouquetfl.data import cifar100
-from bouquetfl.task import Net, get_weights, load_data, set_weights, test, train
-
 logger = logging.getLogger(__name__)
 import os
 import subprocess
@@ -89,8 +86,8 @@ class FlowerClient(NumPyClient):
     # def fit(self, ins: FitIns) -> FitRes:
     def fit(self, parameters_original, ins: FitIns) -> FitRes:
         # Deserialize parameters to NumPy ndarray's
-        # parameters_original = ins.parameters
-        ndarrays_original = parameters_to_ndarrays(parameters_original)
+        #ndarrays_original = parameters_to_ndarrays(parameters_original)
+        ndarrays_original = parameters_original
         np.savez(
             "./bouquetfl/checkpoints/global_params.npz", *ndarrays_original
         )  # multiple arrays
@@ -157,8 +154,16 @@ class FlowerClient(NumPyClient):
         )
 
     def evaluate(self, parameters, config):
-        set_weights(self.net, parameters)
-        loss, accuracy = test(self.net, self.valloader, self.device)
+        from bouquetfl.data import cifar100 as flower_baseline
+        testset = flower_baseline.load_global_test_data()
+        model = flower_baseline.get_model()
+        ndarrays = parameters_to_ndarrays(parameters)
+        flower_baseline.ndarrays_to_model(model, ndarrays)
+        loss, accuracy = flower_baseline.test(
+            model=model,
+            testloader=testset,
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        )
         return loss, len(self.valloader.dataset), {"accuracy": accuracy}
 
 

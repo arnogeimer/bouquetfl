@@ -43,7 +43,7 @@ transform_train = torchvision.transforms.Compose(
 
 transform_test = torchvision.transforms.Compose(
     [
-        # torchvision.transforms.ToTensor(),
+        torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(
             (0.5071, 0.4867, 0.4408),
             (0.2675, 0.2565, 0.2761),
@@ -72,6 +72,7 @@ def dirichlet_based_split(num_clients, alpha):
         trust_remote_code=True,
     )
 
+fds = dirichlet_based_split(num_clients=36, alpha=0.5)
 
 def load_data(
     partition_id: int, num_clients: int = 36, num_workers: int = 4, batch_size: int = 64

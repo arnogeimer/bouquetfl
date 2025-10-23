@@ -17,6 +17,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import pyarrow as pa
 
+from bouquetfl.task import Net, get_weights
 pa.set_cpu_count(1)
 # Arguments:
 
