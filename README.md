@@ -39,6 +39,7 @@ This enables federated learning experiments that reflect a more realistic hardwa
 ## 🖥️ Example Hardware Profiles
 This project can simulate a wide range of common consumer hardware from:  
 
+### GPUs
 - **NVIDIA GeForce GTX & RTX series**
 - **AMD Radeon RX 500 series**
 - **Intel Arc Series**
@@ -133,6 +134,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
