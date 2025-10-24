@@ -102,7 +102,7 @@ def plot_federation_timeline(df):
     plt.xlabel("time (s)", loc = "right")
     plt.title("Federation timetable")
     plt.tight_layout()
-    plt.savefig("./timetable.pdf")
+    plt.savefig("./timetable.png")
     
 gpu_times(results)
 cpu_times(results)
