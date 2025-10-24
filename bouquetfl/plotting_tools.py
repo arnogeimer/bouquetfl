@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from matplotlib.lines import Line2D
 
 d = {'id': np.linspace(0, 19, 20), 
      'gpu': [
@@ -101,6 +102,13 @@ def plot_federation_timeline(df):
     ax.set_yticks(range(len(df["id"])), y_ticks, fontsize=5)
     plt.xlabel("time (s)", loc = "right")
     plt.title("Federation timetable")
+    
+
+    custom_lines = [Line2D([0], [0], color="red", lw=4),
+                    Line2D([0], [0], color="green", lw=4),]
+
+    ax.legend(custom_lines, ['load_time', 'train_time'])
+    
     plt.tight_layout()
     plt.savefig("./timetable.png")
     
