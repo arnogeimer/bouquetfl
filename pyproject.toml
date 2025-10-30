@@ -61,7 +61,7 @@ fraction-fit = 1
 local-epochs = 1
 experiment = "cifar100"
 model = "resnet18"              # model architecture or LLM, optional
-num_clients = 10                # number of federated clients
+num_clients = 2                # number of federated clients
 batch_size = 32                 # training batch size
 learning_rate = 0.01 
 
@@ -72,6 +72,8 @@ default = "local-simulation"
 # Local simulation federation with 10 virtual SuperNodes
 [tool.flwr.federations.local-simulation]
 options.num-supernodes = 10
+options.backend.client-resources.num-cpus = 8
+options.backend.client-resources.num-gpus = 1
 
 # Remote federation example for use with SuperLink
 [tool.flwr.federations.remote-federation]

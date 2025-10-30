@@ -178,6 +178,7 @@ def set_physical_gpu_limits(gpu_name: str):
 ############# CPU tools #############
 #####################################
 
+
 def set_cpu_limit(cpu_name: str):
     cpu_info = get_cpu_info(cpu_name)
     if not cpu_info:
@@ -197,8 +198,6 @@ def set_cpu_limit(cpu_name: str):
         "sudo -S",
         "cpupower",
         "frequency-set",
-        "-g",
-        "performance",
         "-u",
         f"{cpu_info['turbo clock']}GHz",
     ]

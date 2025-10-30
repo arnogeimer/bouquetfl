@@ -6,6 +6,10 @@ from flwr.server.strategy import FedAvg
 
 from bouquetfl.task import Net, get_weights
 
+experiment = "cifar100"
+if experiment == "cifar100":
+    from bouquetfl.data import cifar100 as flower_baseline
+
 
 def server_fn(context: Context):
     # Read from config
@@ -13,15 +17,14 @@ def server_fn(context: Context):
     fraction_fit = context.run_config["fraction-fit"]
 
     # Initialize model parameters
-    ndarrays = get_weights(Net())
-    parameters = ndarrays_to_parameters(ndarrays)
+    initial_parameters = flower_baseline.get_initial_parameters()
 
     # Define strategy
     strategy = FedAvg(
         fraction_fit=fraction_fit,
         fraction_evaluate=1.0,
         min_available_clients=2,
-        initial_parameters=parameters,
+        initial_parameters=initial_parameters,
     )
     config = ServerConfig(num_rounds=num_rounds)
 

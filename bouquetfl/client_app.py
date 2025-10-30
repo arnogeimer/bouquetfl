@@ -7,20 +7,13 @@ import time
 import h5py
 import numpy as np
 import pandas as pd
-from bouquetfl import power_clock_tools as pct
 import torch
-from flwr.client import ClientApp, Client
-from flwr.common import (
-    Code,
-    Context,
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    Status,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+from flwr.client import Client, ClientApp
+from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
+                         FitRes, Status, ndarrays_to_parameters,
+                         parameters_to_ndarrays)
+
+from bouquetfl import power_clock_tools as pct
 
 logger = logging.getLogger(__name__)
 import os
@@ -85,15 +78,14 @@ class FlowerClient(Client):
 
     # def fit(self, ins: FitIns) -> FitRes:
     def fit(self, ins: FitIns) -> FitRes:
-        # Deserialize parameters to NumPy ndarray's
+        # Save the global model parameters to a file to be loaded by trainer.py
         ndarrays_original = parameters_to_ndarrays(ins.parameters)
-        np.savez(
-            "./bouquetfl/checkpoints/global_params.npz", *ndarrays_original
-        )
+        np.savez("./bouquetfl/checkpoints/global_params.npz", *ndarrays_original)
 
         env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
 
         start_mps()
+
         # We run trainer.py in a separate process with systemd-run using set CUDA_MPS_ACTIVE_THREAD_PERCENTAGE.
         # Anything else (CPU throttling, RAM limiting, GPU memory and clock limiting) could be done without a separate process.
         # Theoretically, one could implement ones own model in cuda/triton, physically setting the grid on which the model is allowed to run.
@@ -122,6 +114,8 @@ class FlowerClient(Client):
                 f"{self.gpu_name}",
                 "--cpu_name",
                 f"{self.cpu_name}",
+                "--round",
+                "1"
             ],
             env=env,
         )
@@ -134,7 +128,7 @@ class FlowerClient(Client):
             ndarrays_new = [ndarrays_new[key] for key in ndarrays_new]
             os.remove(self.local_model_save_path)
             # Serialize ndarray's into a Parameters object
-            #parameters_updated = ndarrays_to_parameters(ndarrays_updated)
+            # parameters_updated = ndarrays_to_parameters(ndarrays_updated)
             # Build and return response
             status = Status(code=Code.OK, message="Success")
             logging.info(f"Client {self.client_id} successfully trained.")
@@ -146,8 +140,8 @@ class FlowerClient(Client):
             status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
             parameters_updated = None
         parameters_updated = ndarrays_to_parameters(ndarrays_new)
-        #print("HERE    >>>>>>>",ndarrays_new, self.num_examples, {})
-        #return ndarrays_new, self.num_examples, {}
+        # print("HERE    >>>>>>>",ndarrays_new, self.num_examples, {})
+        # return ndarrays_new, self.num_examples, {}
         return FitRes(
             status=status,
             parameters=parameters_updated,
@@ -157,6 +151,7 @@ class FlowerClient(Client):
 
     def evaluate(self, ins: EvaluateIns):
         from bouquetfl.data import cifar100 as flower_baseline
+
         testset = flower_baseline.load_global_test_data()
         model = flower_baseline.get_model()
         ndarrays = parameters_to_ndarrays(ins.parameters)
@@ -171,21 +166,22 @@ class FlowerClient(Client):
             status=status,
             loss=loss,
             num_examples=self.num_examples,
-            metrics={"accuracy": accuracy}
+            metrics={"accuracy": accuracy},
         )
 
 
 def client_fn(context: Context):
     # Return Client instance
     print(context)
-    return FlowerClient(client_id=context.node_config['partition-id']).to_client()
+    return FlowerClient(client_id=context.node_config["partition-id"]).to_client()
+
 
 # Flower ClientApp
 app = ClientApp(
     client_fn,
 )
 
-'''
+"""
 gpus = [
     # "GeForce RTX 3070",
     "GeForce GTX 1660 SUPER",
@@ -203,4 +199,4 @@ for i in range(len(gpus)):
     x.current_cores = 10240
     parameters = cifar100.get_initial_parameters()
     x.fit(parameters)
-'''
+"""

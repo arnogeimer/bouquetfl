@@ -10,17 +10,14 @@ import torch.nn as nn
 import torchvision
 import tqdm
 import yaml
-from bouquetfl.data.cuda_vision import CUDA_VisionDataSet
 from datasets import Dataset
 from flwr.common.typing import NDArrays
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import (
-    DirichletPartitioner,
-    LinearPartitioner,
-    SizePartitioner,
-    SquarePartitioner,
-)
+from flwr_datasets.partitioner import (DirichletPartitioner, LinearPartitioner,
+                                       SizePartitioner, SquarePartitioner)
 from torch.utils.data import DataLoader
+
+from bouquetfl.data.cuda_vision import CUDA_VisionDataSet
 
 
 # Loading the model (Called when initializing FlowerClient and when testing)
@@ -72,7 +69,9 @@ def dirichlet_based_split(num_clients, alpha):
         trust_remote_code=True,
     )
 
+
 fds = dirichlet_based_split(num_clients=36, alpha=0.5)
+
 
 def load_data(
     partition_id: int, num_clients: int = 36, num_workers: int = 4, batch_size: int = 64

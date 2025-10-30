@@ -11,13 +11,9 @@ import yaml
 from datasets import Dataset
 from flwr.common.typing import NDArrays
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import (
-    DirichletPartitioner,
-    LinearPartitioner,
-    PathologicalPartitioner,
-    SizePartitioner,
-    SquarePartitioner,
-)
+from flwr_datasets.partitioner import (DirichletPartitioner, LinearPartitioner,
+                                       PathologicalPartitioner,
+                                       SizePartitioner, SquarePartitioner)
 from torch.utils.data import DataLoader
 
 # import data_utils
