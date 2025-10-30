@@ -58,7 +58,7 @@ clientapp = "bouquetfl.client_app:app"
 
 # Custom config values accessible via `context.run_config`
 [tool.flwr.app.config]
-num-server-rounds = 3
+num-server-rounds = 10
 fraction-fit = 1
 local-epochs = 1
 experiment = "cifar100"
@@ -71,9 +71,9 @@ learning_rate = 0.01
 [tool.flwr.federations]
 default = "local-simulation"
 
-# Local simulation federation with 2 virtual SuperNodes
+# Local simulation federation with x virtual SuperNodes
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 2
+options.num-supernodes = 3       # number of clients
 options.backend.client-resources.num-cpus = 8
 options.backend.client-resources.num-gpus = 1
 

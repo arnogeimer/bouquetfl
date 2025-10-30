@@ -1,0 +1,14 @@
+client_0:
+  gpu: "GeForce GTX 960"
+  cpu: "Core 2 Duo E8400"
+  ram_gb: 8
+
+client_1:
+  gpu: "GeForce RTX 2080"
+  cpu: "Core i5-6500"
+  ram_gb: 8
+
+client_2:
+  gpu: "GeForce GT 730"
+  cpu: "Ryzen 3 2200G"
+  ram_gb: 8

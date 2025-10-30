@@ -3,100 +3,41 @@ import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
 
-d = {
-    "id": np.linspace(0, 19, 20),
-    "gpu": [
-        "NVIDIA GeForce RTX 4090",
-        "NVIDIA GeForce RTX 4080",
-        "NVIDIA GeForce RTX 4070 Ti",
-        "NVIDIA GeForce RTX 3090 Ti",
-        "NVIDIA GeForce RTX 3080",
-        "NVIDIA GeForce RTX 3070",
-        "NVIDIA GeForce RTX 3060 Ti",
-        "NVIDIA GeForce GTX 1660 Super",
-        "NVIDIA GeForce GTX 1080 Ti",
-        "NVIDIA Tesla V100",
-        "NVIDIA A100",
-        "NVIDIA H100",
-        "AMD Radeon RX 7900 XTX",
-        "AMD Radeon RX 7800 XT",
-        "AMD Radeon RX 7700 XT",
-        "AMD Radeon RX 6700 XT",
-        "AMD Radeon RX 6600 XT",
-        "Intel Arc A770",
-        "Intel Arc A750",
-        "Apple M3 GPU",
-    ],
-    "cpu": [
-        "Intel Core i9-14900K",
-        "Intel Core i7-14700K",
-        "Intel Core i5-14600K",
-        "Intel Core i9-13900KS",
-        "Intel Core i7-13700K",
-        "AMD Ryzen 9 7950X3D",
-        "AMD Ryzen 9 7900X",
-        "AMD Ryzen 7 7800X3D",
-        "AMD Ryzen 7 7700",
-        "AMD Ryzen 5 7600X",
-        "AMD Ryzen 5 5600G",
-        "Intel Core i9-12900K",
-        "Intel Core i7-12700K",
-        "Intel Core i5-12600K",
-        "AMD Threadripper PRO 7995WX",
-        "AMD EPYC 9654",
-        "Intel Xeon W9-3495X",
-        "Apple M3 Max",
-        "Apple M2 Ultra",
-        "Qualcomm Snapdragon X Elite",
-    ],
-    "load_time_1": np.random.random(20),
-    "load_time_2": np.random.random(20),
-    "load_time_3": np.random.random(20),
-    "load_time_4": np.random.random(20),
-    "train_time_1": 13 * np.random.random(20),
-    "train_time_2": 13 * np.random.random(20),
-    "train_time_3": 13 * np.random.random(20),
-    "train_time_4": 13 * np.random.random(20),
-}
+results = pd.read_pickle("./bouquetfl/checkpoints/load_and_training_times.pkl")
 
-results = pd.DataFrame(d)
-results["total_train_time"] = [
-    results["train_time_1"][i]
-    + results["train_time_2"][i]
-    + results["train_time_2"][i]
-    + results["train_time_2"][i]
-    for i in range(len(results["id"]))
-]
-results["total_load_time"] = [
-    results["load_time_1"][i]
-    + results["load_time_2"][i]
-    + results["load_time_3"][i]
-    + results["load_time_4"][i]
-    for i in range(len(results["id"]))
-]
+num_rounds = int(results.shape[1] / 2 - 1)
+
+
+results["total_load_time"] = np.nan
+results["total_train_time"] = np.nan
+
+for i in range(results.shape[0]):
+    train_col_list = [f"train_time_{j}" for j in range(1, num_rounds + 1)]
+    load_col_list = [f"load_time_{j}" for j in range(1, num_rounds + 1)]
+    results["total_train_time"] = results[train_col_list].sum(axis=1)
+    results["total_load_time"] = results[load_col_list].sum(axis=1)
 print(results)
 
-
 def gpu_times(df):
-    df = df.sort_values(by=["train_time_1"], ignore_index=True, ascending=False)
+    df = df.sort_values(by=["total_train_time"], ignore_index=True, ascending=False)
     _, ax = plt.subplots()
-    for i in range(len(df["train_time_1"])):
-        ax.barh(i, df["train_time_1"][i], 0.4, left=0.001, color="royalblue")
-    ax.set_yticks(range(len(df["gpu"])), df["gpu"])
+    for i in range(df.shape[0]):
+        ax.barh(i, df["total_train_time"][i] / num_rounds, 0.4, left=0.001, color="royalblue")
+    ax.set_yticks(range(df.shape[0]), df["gpu"])
     plt.title("Average training times per GPU")
     plt.tight_layout()
-    plt.savefig("./plots/gpu.png")
+    plt.savefig("./bouquetfl/plots/gpu.png")
 
 
 def cpu_times(df):
-    df = df.sort_values(by=["load_time_1"], ignore_index=True, ascending=False)
+    df = df.sort_values(by=["total_load_time"], ignore_index=True, ascending=False)
     _, ax = plt.subplots()
-    for i in range(len(df["load_time_1"])):
-        ax.barh(i - 0.2, df["load_time_1"][i], 0.4, left=0.001, color="royalblue")
-    ax.set_yticks(range(len(df["cpu"])), df["cpu"])
+    for i in range(df.shape[0]):
+        ax.barh(i - 0.2, df["total_load_time"][i] / num_rounds, 0.4, left=0.001, color="royalblue")
+    ax.set_yticks(range(df.shape[0]), df["cpu"])
     plt.title("Average data loading times per CPU")
     plt.tight_layout()
-    plt.savefig("./plots/cpu.png")
+    plt.savefig("./bouquetfl/plots/cpu.png")
 
 
 def plot_federation_timeline(df):
@@ -104,9 +45,9 @@ def plot_federation_timeline(df):
     df = df.sort_values(by=["total_train_time"], ignore_index=True, ascending=False)
     _, ax = plt.subplots()
     starttime = 0.1
-    for round in range(1, 5):
+    for round in range(1, num_rounds + 1):
         max_time = 0
-        for client in range(len(df["id"])):
+        for client in range(df.shape[0]):
             ax.barh(
                 client,
                 df[f"load_time_{round}"][client],
@@ -128,19 +69,19 @@ def plot_federation_timeline(df):
                 max_time = (
                     df[f"load_time_{round}"][client] + df[f"train_time_{round}"][client]
                 )
-        if round < 4:
+        if round < num_rounds - 1:
             plt.vlines(
                 starttime + max_time + 0.05,
                 ymin=-0.2,
-                ymax=len(df["id"]) - 0.8,
+                ymax=df.shape[0] - 0.8,
                 color="black",
                 linewidth=0.1,
             )
         starttime += max_time + 0.1
     y_ticks = [
-        f"{df['gpu'][client]} \n {df['cpu'][client]}" for client in range(len(df["id"]))
+        f"{df['gpu'][client]} \n {df['cpu'][client]}" for client in range(df.shape[0])
     ]
-    ax.set_yticks(range(len(df["id"])), y_ticks, fontsize=5)
+    ax.set_yticks(range(df.shape[0]), y_ticks, fontsize=5)
     plt.xlabel("time (s)", loc="right")
     plt.title("Federation timetable")
 
@@ -152,7 +93,7 @@ def plot_federation_timeline(df):
     ax.legend(custom_lines, ["load_time", "train_time"])
 
     plt.tight_layout()
-    plt.savefig("./plots/timetable.png")
+    plt.savefig("./bouquetfl/plots/timetable.png")
 
 
 gpu_times(results)

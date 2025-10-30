@@ -204,7 +204,7 @@ def set_cpu_limit(cpu_name: str):
             f"CPU {cpu_name} has more cores ({cpu_info["cores"]}) than the current CPU ({current_cpu_info['cores']})."
         )
     if cpu_info["turbo clock"] > int(current_cpu_info["clock speed"]):
-        raise ValueError(
+        print(
             f"CPU {cpu_name} has a higher clock speed ({cpu_info['turbo clock']} MHz) than the current CPU ({current_cpu_info['clock speed']} MHz)."
         )
 

@@ -15,7 +15,7 @@ from bouquetfl import power_clock_tools as pct
 logger = logging.getLogger(__name__)
 import os
 import subprocess
-
+import yaml
 import torch
 
 """from pynvml import (nvmlDeviceGetComputeRunningProcesses, nvmlDeviceGetCount,
@@ -78,7 +78,16 @@ class FlowerClient(Client):
         server_round = ins.config["server_round"]
         num_rounds = ins.config["num_rounds"]
         np.savez("./bouquetfl/checkpoints/global_params.npz", *ndarrays_original)
-
+        try:
+            with open("./bouquetfl/hardwareconf/client_hardware.yaml", "r") as f:
+                client_config = yaml.safe_load(f)
+                self.gpu_name = client_config[f"client_{self.client_id}"]["gpu"]
+                self.cpu_name = client_config[f"client_{self.client_id}"]["cpu"]
+                self.ram_size = client_config[f"client_{self.client_id}"]["ram_gb"]
+        except Exception as e:
+            print(
+                f"Could not load client hardware configuration from YAML file. Using default hardware settings. Error: {e}"
+            )
         env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
 
         start_mps()

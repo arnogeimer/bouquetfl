@@ -118,7 +118,7 @@ def train_model():
     flower_baseline.train(
         model=model,
         trainloader=trainloader,
-        epochs=1,
+        epochs=5,
         device="cuda" if torch.cuda.is_available() else "cpu",
     )
     train_time = timeit.default_timer() - start_train_time
