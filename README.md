@@ -53,7 +53,7 @@ This project can simulate a wide range of common consumer hardware from:
 Each simulated client process enforces limits (cores, threads, memory, GPU scheduling) to approximate the chosen hardware. Below is a toy example.
 
 
-![Toy example of capabilities: simulating hardware profiles and keeping track of federation process](https://github.com/arnogeimer/bouquetfl/blob/main/bouquetfl/timetable.png)
+![Toy example of capabilities: simulating hardware profiles and keeping track of federation process](https://github.com/arnogeimer/bouquetfl/blob/main/bouquetfl/plots/timetable.png)
 
 ## 📊 Experiments
 We provide experiment setups for:  
@@ -134,6 +134,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
