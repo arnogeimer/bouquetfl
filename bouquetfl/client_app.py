@@ -1,12 +1,9 @@
 """bouquetfl: A Flower / PyTorch app."""
 
-import csv
-import logging
-import time
 
-import h5py
+import logging
+
 import numpy as np
-import pandas as pd
 import torch
 from flwr.client import Client, ClientApp
 from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
@@ -18,9 +15,7 @@ from bouquetfl import power_clock_tools as pct
 logger = logging.getLogger(__name__)
 import os
 import subprocess
-from datetime import datetime
 
-import psutil
 import torch
 
 """from pynvml import (nvmlDeviceGetComputeRunningProcesses, nvmlDeviceGetCount,
@@ -80,6 +75,8 @@ class FlowerClient(Client):
     def fit(self, ins: FitIns) -> FitRes:
         # Save the global model parameters to a file to be loaded by trainer.py
         ndarrays_original = parameters_to_ndarrays(ins.parameters)
+        server_round = ins.config["server_round"]
+        num_rounds = ins.config["num_rounds"]
         np.savez("./bouquetfl/checkpoints/global_params.npz", *ndarrays_original)
 
         env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
@@ -115,7 +112,9 @@ class FlowerClient(Client):
                 "--cpu_name",
                 f"{self.cpu_name}",
                 "--round",
-                "1"
+                f"{server_round}",
+                "--num_rounds",
+                f"{num_rounds}"
             ],
             env=env,
         )
@@ -132,6 +131,7 @@ class FlowerClient(Client):
             # Build and return response
             status = Status(code=Code.OK, message="Success")
             logging.info(f"Client {self.client_id} successfully trained.")
+            parameters_updated = ndarrays_to_parameters(ndarrays_new)
 
         except FileNotFoundError:
             logging.info(
@@ -139,7 +139,6 @@ class FlowerClient(Client):
             )
             status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
             parameters_updated = None
-        parameters_updated = ndarrays_to_parameters(ndarrays_new)
         # print("HERE    >>>>>>>",ndarrays_new, self.num_examples, {})
         # return ndarrays_new, self.num_examples, {}
         return FitRes(
@@ -170,9 +169,8 @@ class FlowerClient(Client):
         )
 
 
-def client_fn(context: Context):
+def client_fn(context: Context) -> Client:
     # Return Client instance
-    print(context)
     return FlowerClient(client_id=context.node_config["partition-id"]).to_client()
 
 

@@ -85,7 +85,7 @@ def gpu_times(df):
     ax.set_yticks(range(len(df["gpu"])), df["gpu"])
     plt.title("Average training times per GPU")
     plt.tight_layout()
-    plt.savefig("./gpu.png")
+    plt.savefig("./plots/gpu.png")
 
 
 def cpu_times(df):
@@ -96,7 +96,7 @@ def cpu_times(df):
     ax.set_yticks(range(len(df["cpu"])), df["cpu"])
     plt.title("Average data loading times per CPU")
     plt.tight_layout()
-    plt.savefig("./cpu.png")
+    plt.savefig("./plots/cpu.png")
 
 
 def plot_federation_timeline(df):
@@ -152,7 +152,7 @@ def plot_federation_timeline(df):
     ax.legend(custom_lines, ["load_time", "train_time"])
 
     plt.tight_layout()
-    plt.savefig("./timetable.png")
+    plt.savefig("./plots/timetable.png")
 
 
 gpu_times(results)

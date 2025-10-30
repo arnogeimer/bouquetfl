@@ -6,12 +6,9 @@ import timeit
 import pandas as pd
 import numpy as np
 import torch
-from flwr.common.parameter import (ndarrays_to_parameters,
-                                   parameters_to_ndarrays)
+from flwr.common.parameter import parameters_to_ndarrays
 
-import bouquetfl.resource_utils as resource_utils
 from bouquetfl import power_clock_tools as pct
-from bouquetfl.data import data_utils
 
 os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -19,10 +16,9 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import pyarrow as pa
 
-from bouquetfl.task import Net, get_weights
-
 pa.set_cpu_count(1)
-# Arguments:
+
+# Arguments passed by client.py
 
 parser = argparse.ArgumentParser(
     description="Train a client-specific model with specific hardware settings."
@@ -61,34 +57,24 @@ parser.add_argument(
     default=1,
     help="Round number.",
 )
+parser.add_argument(
+    "--num_rounds",
+    type=int,
+    default=1,
+    help="Total number of rounds.",
+)
 # Load dataset-specific configurations and training calls
-
-global_args = data_utils.GlobalArgs()
 
 args = parser.parse_args()
 if args.experiment == "cifar100":
     from bouquetfl.data import cifar100 as flower_baseline
 
-    global_args.num_clients = 36
-    global_args.max_rounds = 80
-    global_args.draw_threshold = 0.025
-    global_args.min_clients = 6
-
 elif args.experiment == "flowertune_llm":
     from bouquetfl.data import flowertune_llm as flower_baseline
 
-    global_args.num_clients = 8
-    global_args.max_rounds = 12
-    global_args.draw_threshold = 0.001
-    global_args.min_clients = 4
 
 elif args.experiment == "tiny_imagenet":
     from bouquetfl.data import tiny_imagenet as flower_baseline
-
-    global_args.num_clients = 60
-    global_args.max_rounds = 35
-    global_args.draw_threshold = 0.025
-    global_args.min_clients = 10
 
 else:
     raise ValueError("Please specify a dataset and model.")
@@ -152,17 +138,16 @@ def train_model():
     except FileNotFoundError:
         df = pd.DataFrame(
             columns=[
-                "client_id",
                 "gpu",
                 "cpu"
             ]
-            + [f"load_time_{i}" for i in range(1, global_args.max_rounds)] 
-            + [f"train_time_{i}" for i in range(1, global_args.max_rounds)]
+            + [f"load_time_{i}" for i in range(1, args.num_rounds + 1)] 
+            + [f"train_time_{i}" for i in range(1, args.num_rounds + 1)]
         )
     df.at[client_id, "gpu"] = args.gpu_name
     df.at[client_id, "cpu"] = args.cpu_name
-    df.at[client_id, f"load_time_1"] = data_load_time
-    df.at[client_id, f"train_time_1"] = train_time
+    df.at[client_id, f"load_time_{args.round}"] = data_load_time
+    df.at[client_id, f"train_time_{args.round}"] = train_time
     df.to_pickle("./bouquetfl/checkpoints/load_and_training_times.pkl")
 
 train_model()

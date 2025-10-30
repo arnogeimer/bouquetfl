@@ -7,10 +7,24 @@ import pandas as pd
 import psutil
 import torch
 
-password = getpass.getpass(
-    prompt="Enter your sudo password (needed for some GPU/CPU operations): "
-)
+import keyring
 
+# This is required when running on Ubuntu-servers without a GUI, else just us PlaintextKeyring from keyring
+from keyrings.alt.file import PlaintextKeyring
+keyring.set_keyring(PlaintextKeyring())
+
+service = "power_clock_tools_service"
+username = "local_user"
+
+# Before using the tools, run this once to store your sudo password securely.
+#password = input("Enter password: ")
+
+#keyring.set_password(service, username, password)
+#print("Password saved securely.")
+
+password = keyring.get_password(service, username)
+if password is None:
+    raise RuntimeError("No password found in keyring — run setup script first.")
 
 #####################################
 ############# Auxiliary #############
@@ -243,16 +257,12 @@ def get_current_cpu_info():
 def reset_cpu_limit():
     # IMPORTANT: FIND CURRENT MIN MAX WITH >>>`cpupower frequency-info`
     # Output should be something like: hardware limits: 800 MHz - 3.60 GHz
-    MIN = 0.8
-    MAX = get_current_cpu_info()["clock speed"] / 1000.0
     cmd = [
         "sudo -S",
         "cpupower",
         "frequency-set",
-        "-d",
-        f"{MIN}GHz",
-        "-u",
-        f"{MAX}GHz",
+        "-g",
+        "performance",
     ]
     run(cmd)
 

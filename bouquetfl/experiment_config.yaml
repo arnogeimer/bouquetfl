@@ -8,6 +8,6 @@ gpu_graphics_clock_mhz: 1500
 gpu_memory_clock_mhz: 5000
 
 # Optional paths
-dataset_path: ./data
-save_model_path: ./models
-log_path: ./logs
+dataset_path: "./data"
+save_model_path: "./models"
+log_path: "./logs"
