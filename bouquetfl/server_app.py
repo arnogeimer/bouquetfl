@@ -3,8 +3,8 @@
 from flwr.common import Context
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
-from bouquetfl import power_clock_tools as pct
 
+from bouquetfl import power_clock_tools as pct
 
 experiment = "cifar100"
 if experiment == "cifar100":
@@ -12,6 +12,7 @@ if experiment == "cifar100":
 
 
 pct.reset_all_limits()
+
 
 def server_fn(context: Context):
     # Read from config

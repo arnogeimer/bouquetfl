@@ -3,8 +3,8 @@ import os
 import time
 import timeit
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
 from flwr.common.parameter import parameters_to_ndarrays
 
@@ -14,6 +14,8 @@ os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+import importlib
+
 import pyarrow as pa
 
 pa.set_cpu_count(1)
@@ -23,59 +25,45 @@ pa.set_cpu_count(1)
 parser = argparse.ArgumentParser(
     description="Train a client-specific model with specific hardware settings."
 )
-parser.add_argument(
-    "--experiment", type=str, default="cifar100", help="Dataset to use for training."
-)
-parser.add_argument("--client_id", type=int, default=0, help="Client ID.")
-parser.add_argument(
-    "--global_model_load_path",
-    type=str,
-    default="model.npz",
-    help="Path to load the global model.",
-)
-parser.add_argument(
-    "--local_model_save_path",
-    type=str,
-    default="client_model.npz",
-    help="Path to save the local model.",
-)
-parser.add_argument(
-    "--gpu_name",
-    type=str,
-    default="GeForce RTX 3050 8 GB",
-    help="Name of the GPU to simulate (must be in hardwareconf/gpus.csv).",
-)
-parser.add_argument(
-    "--cpu_name",
-    type=str,
-    default="Ryzen 3 1200",
-    help="Name of the CPU to simulate (must be in hardwareconf/cpus.csv).",
-)
-parser.add_argument(
-    "--round",
-    type=int,
-    default=1,
-    help="Round number.",
-)
-parser.add_argument(
-    "--num_rounds",
-    type=int,
-    default=1,
-    help="Total number of rounds.",
-)
+args_list = [
+    (
+        "--experiment",
+        {"type": str, "default": "cifar100", "help": "Dataset to use for training."},
+    ),
+    ("--client_id", {"type": int, "default": 0, "help": "Client ID."}),
+    (
+        "--gpu_name",
+        {
+            "type": str,
+            "default": "GeForce GTX 960",
+            "help": "Name of the GPU to simulate (must be in hardwareconf/gpus.csv).",
+        },
+    ),
+    (
+        "--cpu_name",
+        {
+            "type": str,
+            "default": "Ryzen 3 1200",
+            "help": "Name of the CPU to simulate (must be in hardwareconf/cpus.csv).",
+        },
+    ),
+    ("--round", {"type": int, "default": 1, "help": "    Round number."}),
+    ("--num_rounds", {"type": int, "default": 1, "help": "Total number of rounds."}),
+]
+for arg, kwargs in args_list:
+    parser.add_argument(arg, **kwargs)
+args = parser.parse_args()
+
 # Load dataset-specific configurations and training calls
 
-args = parser.parse_args()
-if args.experiment == "cifar100":
-    from bouquetfl.data import cifar100 as flower_baseline
+modules = {
+    "cifar100": "bouquetfl.data.cifar100",
+    "flowertune_llm": "bouquetfl.data.flowertune_llm",
+    "tiny_imagenet": "bouquetfl.data.tiny_imagenet",
+}
 
-elif args.experiment == "flowertune_llm":
-    from bouquetfl.data import flowertune_llm as flower_baseline
-
-
-elif args.experiment == "tiny_imagenet":
-    from bouquetfl.data import tiny_imagenet as flower_baseline
-
+if args.experiment in modules:
+    flower_baseline = importlib.import_module(modules[args.experiment])
 else:
     raise ValueError("Please specify a dataset and model.")
 
@@ -86,14 +74,13 @@ else:
 
 def train_model():
     client_id = args.client_id
-    global_model_load_path = args.global_model_load_path
-    local_model_save_path = args.local_model_save_path
 
     # Load model and apply global parameters
     model = flower_baseline.get_model()
     try:
         ndarrays_original = np.load(
-            "./bouquetfl/checkpoints/global_params.npz", allow_pickle=True
+            f"./bouquetfl/checkpoints/global_params_round_{args.round}.npz",
+            allow_pickle=True,
         )
         ndarrays_original = [ndarrays_original[key] for key in ndarrays_original]
     except FileNotFoundError:
@@ -137,11 +124,8 @@ def train_model():
         df = pd.read_pickle("./bouquetfl/checkpoints/load_and_training_times.pkl")
     except FileNotFoundError:
         df = pd.DataFrame(
-            columns=[
-                "gpu",
-                "cpu"
-            ]
-            + [f"load_time_{i}" for i in range(1, args.num_rounds + 1)] 
+            columns=["gpu", "cpu"]
+            + [f"load_time_{i}" for i in range(1, args.num_rounds + 1)]
             + [f"train_time_{i}" for i in range(1, args.num_rounds + 1)]
         )
     df.at[client_id, "gpu"] = args.gpu_name
@@ -149,5 +133,6 @@ def train_model():
     df.at[client_id, f"load_time_{args.round}"] = data_load_time
     df.at[client_id, f"train_time_{args.round}"] = train_time
     df.to_pickle("./bouquetfl/checkpoints/load_and_training_times.pkl")
+
 
 train_model()

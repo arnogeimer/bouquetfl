@@ -4,7 +4,6 @@
 import logging
 
 import numpy as np
-import torch
 from flwr.client import Client, ClientApp
 from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
                          FitRes, Status, ndarrays_to_parameters,
@@ -18,17 +17,13 @@ import subprocess
 import yaml
 import torch
 
-"""from pynvml import (nvmlDeviceGetComputeRunningProcesses, nvmlDeviceGetCount,
-                    nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlInit,
-                    nvmlShutdown)"""
-
-
 def create_cuda_restricted_env(gpu_name: str, current_cores: int):
 
     gpu_info = pct.get_gpu_info(gpu_name)
     target_cores = gpu_info["cuda cores"]
     env = os.environ.copy()
     env["CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"] = str(100 * target_cores / current_cores)
+    print(f"Creating CUDA MPS env with {target_cores} cores out of {current_cores} ({str(100 * target_cores / current_cores)}%)")
     return env
 
 
@@ -62,40 +57,32 @@ class FlowerClient(Client):
     ) -> None:
         self.client_id = client_id
         self.num_examples = 1
-        self.gpu_name: str = "GeForce 210"
-        self.cpu_name: str = "Ryzen 3 1200"
-        self.ram_size: int = 2
-        self.current_cores: int = 10240
-        self.global_model_load_path: str = ""
-        self.local_model_save_path: str = (
-            f"./bouquetfl/checkpoints/params_updated_{client_id}.npz"
-        )
+        self.current_cores: int = 7168 # Set to physical GPU's CUDA cores, e.g., 7168 for RTX 4070 Super
 
-    # def fit(self, ins: FitIns) -> FitRes:
     def fit(self, ins: FitIns) -> FitRes:
         # Save the global model parameters to a file to be loaded by trainer.py
-        ndarrays_original = parameters_to_ndarrays(ins.parameters)
-        server_round = ins.config["server_round"]
-        num_rounds = ins.config["num_rounds"]
-        np.savez("./bouquetfl/checkpoints/global_params.npz", *ndarrays_original)
+    
+        if not os.path.exists(f"./bouquetfl/checkpoints/global_params_round_{ins.config['server_round']}.npz"):
+            ndarrays_original = parameters_to_ndarrays(ins.parameters)
+            np.savez(f"./bouquetfl/checkpoints/global_params_round_{ins.config['server_round']}.npz", *ndarrays_original)
         try:
             with open("./bouquetfl/hardwareconf/client_hardware.yaml", "r") as f:
                 client_config = yaml.safe_load(f)
-                self.gpu_name = client_config[f"client_{self.client_id}"]["gpu"]
-                self.cpu_name = client_config[f"client_{self.client_id}"]["cpu"]
-                self.ram_size = client_config[f"client_{self.client_id}"]["ram_gb"]
+                gpu_name = client_config[f"client_{self.client_id}"]["gpu"]
+                cpu_name = client_config[f"client_{self.client_id}"]["cpu"]
+                ram_size = client_config[f"client_{self.client_id}"]["ram_gb"]
         except Exception as e:
             print(
-                f"Could not load client hardware configuration from YAML file. Using default hardware settings. Error: {e}"
+                f"Could not load client hardware configuration from YAML file. Will use default hardware settings. Error: {e} \n Loading default values instead."
             )
-        env = create_cuda_restricted_env(self.gpu_name, self.current_cores)
+            ram_size = 2  # in GB
+        env = create_cuda_restricted_env(gpu_name, self.current_cores)
 
         start_mps()
 
         # We run trainer.py in a separate process with systemd-run using set CUDA_MPS_ACTIVE_THREAD_PERCENTAGE.
         # Anything else (CPU throttling, RAM limiting, GPU memory and clock limiting) could be done without a separate process.
-        # Theoretically, one could implement ones own model in cuda/triton, physically setting the grid on which the model is allowed to run.
-        # This way, one could limit the GPU usage without MPS. However, this would require a lot of work and is not implemented here.
+
         # We take advantage of systemd-run to limit the RAM usage of the process.
 
         child = subprocess.Popen(
@@ -104,52 +91,51 @@ class FlowerClient(Client):
                 "--user",
                 "--scope",
                 "-p",
-                f"MemoryMax={self.ram_size}G",
-                "uv",  # <--- Change this to "python3" or corresponding if you don't have uv installed
+                f"MemoryMax={ram_size}G",
+                "uv",  # <--- Change this to "python3", "poetry", or corresponding if you don't have uv installed
                 "run",
                 "./bouquetfl/trainer.py",
                 "--experiment",
-                "cifar100",
+                f"{'cifar100'}",
                 "--client_id",
                 f"{self.client_id}",
-                "--global_model_load_path",
-                self.global_model_load_path,
-                "--local_model_save_path",
-                self.local_model_save_path,
                 "--gpu_name",
-                f"{self.gpu_name}",
+                f"{gpu_name}",
                 "--cpu_name",
-                f"{self.cpu_name}",
+                f"{cpu_name}",
                 "--round",
-                f"{server_round}",
+                f"{ins.config['server_round']}",
                 "--num_rounds",
-                f"{num_rounds}"
+                f"{ins.config['num_rounds']}"
             ],
             env=env,
         )
         pid = child.pid
         print("Child PID:", pid)
 
+        # Important: wait for the subprocess to finish before spawning the next one
         child.wait()
+        stop_mps()
+
+        # Get new stored model parameters and return to server
+        local_save_path = f"./bouquetfl/checkpoints/params_updated_{self.client_id}.npz"
         try:
-            ndarrays_new = np.load(self.local_model_save_path, allow_pickle=True)
+            ndarrays_new = np.load(local_save_path, allow_pickle=True)
             ndarrays_new = [ndarrays_new[key] for key in ndarrays_new]
-            os.remove(self.local_model_save_path)
-            # Serialize ndarray's into a Parameters object
-            # parameters_updated = ndarrays_to_parameters(ndarrays_updated)
+            os.remove(local_save_path)
             # Build and return response
             status = Status(code=Code.OK, message="Success")
             logging.info(f"Client {self.client_id} successfully trained.")
+            # Serialize ndarray's into a Parameters object
             parameters_updated = ndarrays_to_parameters(ndarrays_new)
 
         except FileNotFoundError:
             logging.info(
-                f"Model file {self.local_model_save_path} not found. Training on client {self.client_id} might have failed."
+                f"Model file {local_save_path} not found. Training on client {self.client_id} seems to have failed."
             )
             status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
             parameters_updated = None
-        # print("HERE    >>>>>>>",ndarrays_new, self.num_examples, {})
-        # return ndarrays_new, self.num_examples, {}
+
         return FitRes(
             status=status,
             parameters=parameters_updated,
@@ -187,23 +173,3 @@ def client_fn(context: Context) -> Client:
 app = ClientApp(
     client_fn,
 )
-
-"""
-gpus = [
-    # "GeForce RTX 3070",
-    "GeForce GTX 1660 SUPER",
-]
-ram_sizes = [1, 0.5, 0.25]  # in GB
-
-for i in range(len(gpus)):
-    print(f"Starting client {i} with GPU {gpus[i]}")
-    x = FlowerClient(i)
-    x.client_id = i
-    x.gpu_name = gpus[i]
-    x.cpu_name = "Ryzen 3 1200"
-    x.ram_size = ram_sizes[i]
-    # IMPORTANT: FIND OUT CURRENT CORES OF THE GPU
-    x.current_cores = 10240
-    parameters = cifar100.get_initial_parameters()
-    x.fit(parameters)
-"""

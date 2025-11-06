@@ -18,11 +18,18 @@ for i in range(results.shape[0]):
     results["total_load_time"] = results[load_col_list].sum(axis=1)
 print(results)
 
+
 def gpu_times(df):
     df = df.sort_values(by=["total_train_time"], ignore_index=True, ascending=False)
     _, ax = plt.subplots()
     for i in range(df.shape[0]):
-        ax.barh(i, df["total_train_time"][i] / num_rounds, 0.4, left=0.001, color="royalblue")
+        ax.barh(
+            i,
+            df["total_train_time"][i] / num_rounds,
+            0.4,
+            left=0.001,
+            color="royalblue",
+        )
     ax.set_yticks(range(df.shape[0]), df["gpu"])
     plt.title("Average training times per GPU")
     plt.tight_layout()
@@ -33,7 +40,13 @@ def cpu_times(df):
     df = df.sort_values(by=["total_load_time"], ignore_index=True, ascending=False)
     _, ax = plt.subplots()
     for i in range(df.shape[0]):
-        ax.barh(i - 0.2, df["total_load_time"][i] / num_rounds, 0.4, left=0.001, color="royalblue")
+        ax.barh(
+            i - 0.2,
+            df["total_load_time"][i] / num_rounds,
+            0.4,
+            left=0.001,
+            color="royalblue",
+        )
     ax.set_yticks(range(df.shape[0]), df["cpu"])
     plt.title("Average data loading times per CPU")
     plt.tight_layout()

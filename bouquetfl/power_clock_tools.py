@@ -3,24 +3,24 @@ import os
 import shutil
 import subprocess
 
+import keyring
 import pandas as pd
 import psutil
 import torch
 
-import keyring
-
 # This is required when running on Ubuntu-servers without a GUI, else just us PlaintextKeyring from keyring
 from keyrings.alt.file import PlaintextKeyring
+
 keyring.set_keyring(PlaintextKeyring())
 
 service = "power_clock_tools_service"
 username = "local_user"
 
 # Before using the tools, run this once to store your sudo password securely.
-#password = input("Enter password: ")
+# password = input("Enter password: ")
 
-#keyring.set_password(service, username, password)
-#print("Password saved securely.")
+# keyring.set_password(service, username, password)
+# print("Password saved securely.")
 
 password = keyring.get_password(service, username)
 if password is None:
@@ -46,12 +46,6 @@ def require_sudo():
 ############# GPU tools #############
 #####################################
 
-"""
-def get_memory_usage(gpu_index: int):
-    cmd = ["nvidia-smi", "-i", str(gpu_index), "--query-gpu=memory.used,memory.total"]
-    run(cmd)
-"""
-
 
 def set_gpu_memory_limit(value: int, gpu_index: int):
     "Sets total available memory of the process to <value> GB"
@@ -62,26 +56,6 @@ def set_gpu_memory_limit(value: int, gpu_index: int):
 
 def reset_gpu_memory_limit(gpu_index: int):
     torch.cuda.memory.set_per_process_memory_fraction(1.0, gpu_index)
-
-
-"""
-def set_power_limit_watts(gpu_index: int, watts: int):
-    # Requires sudo and within allowed range (see `nvidia-smi -q -d POWER`)
-    cmd = ["sudo -S", "nvidia-smi", "-i", str(gpu_index), "-pl", str(watts)]
-    run(cmd)
-"""
-
-"""
-def show_power_limits(gpu_index: int):
-    cmd = [
-        "nvidia-smi",
-        "-i",
-        str(gpu_index),
-        "--query-gpu=power.min_limit,power.max_limit,power.limit,power.draw",
-        "--format=csv",
-    ]
-    run(cmd)
-"""
 
 
 def lock_gpu_clocks(gpu_index: int, min_mhz: int, max_mhz: int):
@@ -255,8 +229,7 @@ def get_current_cpu_info():
 
 
 def reset_cpu_limit():
-    # IMPORTANT: FIND CURRENT MIN MAX WITH >>>`cpupower frequency-info`
-    # Output should be something like: hardware limits: 800 MHz - 3.60 GHz
+    # Resets CPU governor to performance
     cmd = [
         "sudo -S",
         "cpupower",
