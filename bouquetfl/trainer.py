@@ -14,6 +14,8 @@ os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+torch.backends.cuda.matmul.allow_tf32 = False # turn off tensor core usage, as these are not present in older gpus TODO: quantify wether GPU has tensor cores
+torch.backends.cudnn.allow_tf32 = False # turn off tensor core usage, as these are not present in older gpus
 import importlib
 
 import pyarrow as pa
