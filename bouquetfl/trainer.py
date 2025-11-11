@@ -14,8 +14,6 @@ os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-torch.backends.cuda.matmul.allow_tf32 = False # turn off tensor core usage, as these are not present in older gpus TODO: quantify wether GPU has tensor cores
-torch.backends.cudnn.allow_tf32 = False # turn off tensor core usage, as these are not present in older gpus
 import importlib
 
 import pyarrow as pa
@@ -37,7 +35,7 @@ args_list = [
         "--gpu_name",
         {
             "type": str,
-            "default": "GeForce GTX 960",
+            "default": "None",
             "help": "Name of the GPU to simulate (must be in hardwareconf/gpus.csv).",
         },
     ),
@@ -92,7 +90,6 @@ def train_model():
     # Set hardware limits (Ram limit was set in the subprocess environement)
     pct.set_physical_gpu_limits(args.gpu_name)
     num_cpu_cores = pct.set_cpu_limit(args.cpu_name)
-
     # Give some time for the limits to take effect
     time.sleep(0.5)
 
@@ -108,7 +105,7 @@ def train_model():
         model=model,
         trainloader=trainloader,
         epochs=5,
-        device="cuda" if torch.cuda.is_available() else "cpu",
+        device="cuda" if torch.cuda.is_available() and args.gpu_name != "None" else "cpu",
     )
     train_time = timeit.default_timer() - start_train_time
 

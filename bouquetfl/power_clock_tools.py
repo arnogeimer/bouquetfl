@@ -86,6 +86,16 @@ def lock_gpu_memory_clocks(gpu_index: int, min_mhz: int, max_mhz: int):
     ]
     run(cmd)
 
+def has_tensor_cores(gpu_name: str) -> bool:
+    tensor_core_gpus = [
+        "GeForce RTX 20",
+        "GeForce RTX 30",
+        "GeForce RTX 40",
+    ]
+    for tensor_core_gpu in tensor_core_gpus:
+        if tensor_core_gpu in gpu_name:
+            return True
+    return False
 
 def reset_gpu_memory_clocks(gpu_index: int):
     # Requires sudo; only supported on Volta+.
@@ -159,6 +169,12 @@ def set_physical_gpu_limits(gpu_name: str):
     lock_gpu_memory_clocks(
         0, int(gpu_info["memory speed"]), int(gpu_info["memory speed"])
     )
+
+    if not has_tensor_cores(gpu_name):
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        print(f"Disabled TF32 tensor core usage due to lack of tensor cores in {gpu_name}.")
+
     print(f"Set GPU memory speed to {gpu_info['memory speed']} MHz")
 
 
