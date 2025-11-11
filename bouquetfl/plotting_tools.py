@@ -56,3 +56,4 @@ chart = alt.Chart(df_long).mark_bar(
 )
 
 chart.save('./bouquetfl/plots/timetable.pdf')
+chart.save('./bouquetfl/plots/timetable.png')
