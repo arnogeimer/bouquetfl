@@ -1,4 +1,4 @@
-GPU name,Memory (GB),Memory type,Memory bandwidth,Clock speed,Memory Speed,CUDA cores,shss
+gpu name,Memory (GB),Memory type,Memory bandwidth,Clock speed,Memory Speed,CUDA cores,shss
 RTX PRO 6000 Blackwell,96,GDDR7,512,2617,1750,24064,0
 Radeon RX 5700 XT,8,GDDR6,256,1905,1750,2560,0.8609738884968243
 GeForce GTX 1070,8,GDDR5,256,1683,2002,1920,1.1291460832745237
