@@ -169,12 +169,14 @@ def set_physical_gpu_limits(gpu_name: str):
     lock_gpu_memory_clocks(
         0, int(gpu_info["memory speed"]), int(gpu_info["memory speed"])
     )
-
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
+    '''
     if not has_tensor_cores(gpu_name):
         torch.backends.cuda.matmul.allow_tf32 = False
         torch.backends.cudnn.allow_tf32 = False
         print(f"Disabled TF32 tensor core usage due to lack of tensor cores in {gpu_name}.")
-
+    '''
     print(f"Set GPU memory speed to {gpu_info['memory speed']} MHz")
 
 

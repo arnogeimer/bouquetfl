@@ -26,7 +26,7 @@ from bouquetfl.data.cuda_vision import CUDA_VisionDataSet
 
 # Loading the model (Called when initializing FlowerClient and when testing)
 def get_model() -> torch.nn.Module:
-    return timm.create_model("resnet18").cuda()
+    return timm.create_model("resnet152").cuda()
 
 
 transform_train = torchvision.transforms.Compose(
