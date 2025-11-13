@@ -116,6 +116,7 @@ Note: All these constraints are runtime-only—they simulate weaker hardware but
 
 ## 🗺️ Roadmap
 - Add **timekeeping** to record and showcase how long each client configuration takes to complete training and communication. ☑️
+- Add random **client hardware generation** based on current most popular devices. ☑️
 - Add **location simulation** (to model upload/download latency).  
 - Support **parallel client spawning** (multiple clients at once).
 - Add **mobile devices** (e.g., phones, Raspberry Pi, etc.) as available options.
@@ -134,6 +135,7 @@ This project is licensed under the **MIT License** (open and permissive).
 - [Flower](https://flower.dev/) for federated learning framework  
 - [PyTorch](https://pytorch.org/)  
 - [timm](https://github.com/huggingface/pytorch-image-models)  
+
 
 
 
