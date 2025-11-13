@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 # Steam Hardware Survey based sampling for GPUs and CPUs: hardware stats for Windows Computers (94.84% of total)
+# Source: https://store.steampowered.com/hwsurvey/processormfg/   (October 2025)
 
 def generate_gpu_samples(n_samples: int) -> list[str]:
 
