@@ -25,6 +25,12 @@ def plot_gpu_average_training_times():
         load_col_list = [f"{j}load_time" for j in range(1, num_rounds + 1)]
         results["total_train_time"] = results[train_col_list].sum(axis=1)
         results["total_load_time"] = results[load_col_list].sum(axis=1)
+    
+    # Identify duplicate GPUs and CPUs and average their times
+    results['total_train_time'] = results.groupby('gpu')['total_train_time'].transform('mean')
+    results['total_load_time'] = results.groupby('cpu')['total_load_time'].transform('mean')
+    results = results.drop_duplicates(subset=['gpu']).reset_index(drop=True)
+    results = results.drop_duplicates(subset=['cpu']).reset_index(drop=True)
 
     df_long = results.melt(
         id_vars=["gpu", "cpu", "total_load_time", "total_train_time", "1load_time"],
@@ -43,12 +49,21 @@ def plot_gpu_average_training_times():
             cornerRadiusTopLeft=2,
             cornerRadiusBottomRight=2,
             cornerRadiusTopRight=2,
+            strokeWidth=0,
         )
         .encode(
-            x=alt.X("value:Q", title="training time (s)"),
+            x=alt.X("total_train_time", title="training time (s)"),
             y=alt.Y("gpu").sort("-x"),
         )
     )
+
+    gpu_chart.configure_view(
+    continuousHeight=600,
+    continuousWidth=800
+        ).configure_scale(
+            bandPaddingInner=0,
+            bandPaddingOuter=0
+        )
 
     gpu_chart.save("plots/timetable_gpu.pdf")
     gpu_chart.save("plots/timetable_gpu.png")
