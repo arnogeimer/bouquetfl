@@ -71,14 +71,10 @@ from typing import OrderedDict
 import numpy as np
 import torch
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import (
-    DirichletPartitioner,
-    ExponentialPartitioner,
-    LinearPartitioner,
-    SizePartitioner,
-    SquarePartitioner,
-)
-
+from flwr_datasets.partitioner import (DirichletPartitioner,
+                                       ExponentialPartitioner,
+                                       LinearPartitioner, SizePartitioner,
+                                       SquarePartitioner)
 # from trl import DataCollatorForCompletionOnlyLM
 from transformers import AutoTokenizer, DataCollatorForLanguageModeling
 
@@ -120,12 +116,8 @@ import yaml
 from datasets import Dataset
 from flwr.common import GetParametersIns
 from flwr.common.typing import NDArrays
-from peft import (
-    LoraConfig,
-    get_peft_model,
-    get_peft_model_state_dict,
-    set_peft_model_state_dict,
-)
+from peft import (LoraConfig, get_peft_model, get_peft_model_state_dict,
+                  set_peft_model_state_dict)
 from peft.peft_model import PeftModel
 from peft.utils import prepare_model_for_kbit_training
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig

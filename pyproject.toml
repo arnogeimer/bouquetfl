@@ -56,18 +56,19 @@ publisher = "arnogeimer"
 # Point to your ServerApp and ClientApp objects
 # Format: "<module>:<object>"
 [tool.flwr.app.components]
-serverapp = "bouquetfl.server_app:app"
-clientapp = "bouquetfl.client_app:app"
+serverapp = "scripts.server_app:app"
+clientapp = "scripts.client_app:app"
 
 # Custom config values accessible via `context.run_config`
 [tool.flwr.app.config]
-num-server-rounds = 1
+num-server-rounds = 20
 fraction-fit = 1
 local-epochs = 1
 experiment = "cifar100"
 model = "resnet18"              # model architecture or LLM, optional
-batch_size = 32                 # training batch size
+batch_size = 64                 # training batch size
 learning_rate = 0.01 
+num-clients = 16
 
 # Default federation to use when running the app
 [tool.flwr.federations]

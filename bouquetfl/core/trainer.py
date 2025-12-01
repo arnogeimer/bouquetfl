@@ -8,7 +8,10 @@ import pandas as pd
 import torch
 from flwr.common.parameter import parameters_to_ndarrays
 
-from bouquetfl import power_clock_tools as pct
+from bouquetfl.utils import power_clock_tools as pct
+from bouquetfl.utils.filesystem import (load_client_hardware_config,
+                                        save_load_and_training_times,
+                                        save_ndarrays)
 
 os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -31,22 +34,6 @@ args_list = [
         {"type": str, "default": "cifar100", "help": "Dataset to use for training."},
     ),
     ("--client_id", {"type": int, "default": 0, "help": "Client ID."}),
-    (
-        "--gpu_name",
-        {
-            "type": str,
-            "default": "None",
-            "help": "Name of the GPU to simulate (must be in hardwareconf/gpus.csv).",
-        },
-    ),
-    (
-        "--cpu_name",
-        {
-            "type": str,
-            "default": "Ryzen 3 1200",
-            "help": "Name of the CPU to simulate (must be in hardwareconf/cpus.csv).",
-        },
-    ),
     ("--round", {"type": int, "default": 1, "help": "    Round number."}),
     ("--num_rounds", {"type": int, "default": 1, "help": "Total number of rounds."}),
 ]
@@ -57,9 +44,9 @@ args = parser.parse_args()
 # Load dataset-specific configurations and training calls
 
 modules = {
-    "cifar100": "bouquetfl.data.cifar100",
-    "flowertune_llm": "bouquetfl.data.flowertune_llm",
-    "tiny_imagenet": "bouquetfl.data.tiny_imagenet",
+    "cifar100": "task.cifar100",
+    "flowertune_llm": "task.flowertune_llm",
+    "tiny_imagenet": "task.tiny_imagenet",
 }
 
 if args.experiment in modules:
@@ -74,12 +61,12 @@ else:
 
 def train_model():
     client_id = args.client_id
-
+    gpu, cpu, _ = load_client_hardware_config(client_id)
     # Load model and apply global parameters
     model = flower_baseline.get_model()
     try:
         ndarrays_original = np.load(
-            f"./bouquetfl/checkpoints/global_params_round_{args.round}.npz",
+            f"checkpoints/global_params_round_{args.round}.npz",
             allow_pickle=True,
         )
         ndarrays_original = [ndarrays_original[key] for key in ndarrays_original]
@@ -88,8 +75,8 @@ def train_model():
         ndarrays_original = parameters_to_ndarrays(model_parameters)
 
     # Set hardware limits (Ram limit was set in the subprocess environement)
-    pct.set_physical_gpu_limits(args.gpu_name)
-    num_cpu_cores = pct.set_cpu_limit(args.cpu_name)
+    pct.set_physical_gpu_limits(gpu)
+    num_cpu_cores = pct.set_cpu_limit(cpu)
     # Give some time for the limits to take effect
     time.sleep(0.5)
 
@@ -105,33 +92,26 @@ def train_model():
         model=model,
         trainloader=trainloader,
         epochs=5,
-        device="cuda" if torch.cuda.is_available() and args.gpu_name != "None" else "cpu",
+        device=("cuda" if torch.cuda.is_available() and gpu != "None" else "cpu"),
     )
     train_time = timeit.default_timer() - start_train_time
 
-    # Reset hardware limits
-    pct.reset_all_limits()
-
     # Save updated model parameters
-    ndarrays_new = flower_baseline.ndarrays_from_model(model)
-    np.savez(f"./bouquetfl/checkpoints/params_updated_{client_id}.npz", *ndarrays_new)
+    save_ndarrays(
+        flower_baseline.ndarrays_from_model(model),
+        f"checkpoints/params_updated_{client_id}.npz",
+    )
 
     # Save load and training times
-    print(f"Data loading time: {data_load_time} seconds")
-    print(f"Training time: {train_time} seconds")
-    try:
-        df = pd.read_pickle("./bouquetfl/checkpoints/load_and_training_times.pkl")
-    except FileNotFoundError:
-        df = pd.DataFrame(
-            columns=["gpu", "cpu"]
-            + [f"load_time_{i}" for i in range(1, args.num_rounds + 1)]
-            + [f"train_time_{i}" for i in range(1, args.num_rounds + 1)]
-        )
-    df.at[client_id, "gpu"] = args.gpu_name
-    df.at[client_id, "cpu"] = args.cpu_name
-    df.at[client_id, f"load_time_{args.round}"] = data_load_time
-    df.at[client_id, f"train_time_{args.round}"] = train_time
-    df.to_pickle("./bouquetfl/checkpoints/load_and_training_times.pkl")
+    save_load_and_training_times(
+        client_id=client_id,
+        round=args.round,
+        gpu=gpu,
+        cpu=cpu,
+        data_load_time=data_load_time,
+        train_time=train_time,
+        num_rounds=args.num_rounds,
+    )
 
 
 train_model()

@@ -1,15 +1,11 @@
-import getpass
 import os
 import shutil
-import subprocess
 
 import keyring
 import pandas as pd
-import psutil
 import torch
-
-from numba import cuda
-# This is required when running on Ubuntu-servers without a GUI, else just us PlaintextKeyring from keyring
+import yaml
+# The alt.file source is required when running on Ubuntu-servers without a GUI, else just use keyring.PlaintextKeyring
 from keyrings.alt.file import PlaintextKeyring
 
 keyring.set_keyring(PlaintextKeyring())
@@ -26,6 +22,9 @@ username = "local_user"
 password = keyring.get_password(service, username)
 if password is None:
     raise RuntimeError("No password found in keyring — run setup script first.")
+
+with open("config/local_hardware_parameters.yaml", "r") as stats_file:
+    current_hardware_info = yaml.safe_load(stats_file)
 
 #####################################
 ############# Auxiliary #############
@@ -87,6 +86,7 @@ def lock_gpu_memory_clocks(gpu_index: int, min_mhz: int, max_mhz: int):
     ]
     run(cmd)
 
+
 def has_tensor_cores(gpu_name: str) -> bool:
     tensor_core_gpus = [
         "GeForce RTX 20",
@@ -98,60 +98,16 @@ def has_tensor_cores(gpu_name: str) -> bool:
             return True
     return False
 
+
 def reset_gpu_memory_clocks(gpu_index: int):
     # Requires sudo; only supported on Volta+.
     cmd = ["sudo -S", "nvidia-smi", "-i", str(gpu_index), "--reset-memory-clocks"]
     run(cmd)
 
-def get_available_gpu_cores():
-
-    cc_cores_per_SM_dict = {
-        (2,0) : 32,
-        (2,1) : 48,
-        (3,0) : 192,
-        (3,5) : 192,
-        (3,7) : 192,
-        (5,0) : 128,
-        (5,2) : 128,
-        (6,0) : 64,
-        (6,1) : 128,
-        (7,0) : 64,
-        (7,5) : 64,
-        (8,0) : 64,
-        (8,6) : 128,
-        (8,9) : 128,
-        (9,0) : 128,
-        (10,0) : 128,
-        (12,0) : 128
-        }
-    device = cuda.get_current_device()
-    my_sms = getattr(device, 'MULTIPROCESSOR_COUNT')
-    my_cc = device.compute_capability
-    cores_per_sm = cc_cores_per_SM_dict.get(my_cc)
-    total_cores = cores_per_sm*my_sms
-    return total_cores
-
-def get_current_gpu_info():
-    query = "name,memory.total,clocks.max.graphics,clocks.max.memory"
-    result = subprocess.run(
-        ["nvidia-smi", f"--query-gpu={query}", "--format=csv,noheader,nounits"],
-        stdout=subprocess.PIPE,
-        text=True,
-    )
-    name, mem_total, max_graphics, max_mem = result.stdout.strip().split(", ")
-    total_cores = get_available_gpu_cores()
-    return {
-        "name": name,
-        "memory": int(int(mem_total) / 1024),
-        "clock speed": int(max_graphics),
-        "memory speed": int(max_mem),
-        "cores": total_cores,
-    }
-
 
 def get_gpu_info(gpu_name: str):
     gpu_info = None
-    with open("./bouquetfl/hardwareconf/gpus.csv") as file:
+    with open("hardwareconf/gpus.csv") as file:
         gpus = pd.read_csv(file, header=None).to_numpy()
     for gpu in gpus:
         if gpu[0] == gpu_name:
@@ -175,19 +131,18 @@ def set_physical_gpu_limits(gpu_name: str):
     gpu_info = get_gpu_info(gpu_name)
     if not gpu_info:
         raise ValueError(f"GPU {gpu_name} not found in database.")
-    current_gpu_info = get_current_gpu_info()
 
-    if gpu_info["memory"] > int(current_gpu_info["memory"]):
+    if gpu_info["memory"] > int(current_hardware_info["gpu_memory"]):
         raise ValueError(
-            f"GPU {gpu_name} has more memory ({gpu_info['memory']} GB) than the current GPU ({current_gpu_info['memory']} GB)."
+            f"GPU {gpu_name} has more memory ({gpu_info['memory']} GB) than the current GPU ({current_hardware_info['gpu_memory']} GB)."
         )
-    if gpu_info["clock speed"] > int(current_gpu_info["clock speed"]):
+    if gpu_info["clock speed"] > int(current_hardware_info["gpu_clock_speed"]):
         raise ValueError(
-            f"GPU {gpu_name} has a higher clock speed ({gpu_info['clock speed']} MHz) than the current GPU ({current_gpu_info['clock speed']} MHz)."
+            f"GPU {gpu_name} has a higher clock speed ({gpu_info['clock speed']} MHz) than the current GPU ({current_hardware_info['gpu_clock_speed']} MHz)."
         )
-    if gpu_info["memory speed"] > int(current_gpu_info["memory speed"]):
+    if gpu_info["memory speed"] > int(current_hardware_info["gpu_memory_speed"]):
         raise ValueError(
-            f"GPU {gpu_name} has a higher memory speed ({gpu_info['memory speed']} MHz) than the current GPU ({current_gpu_info['memory speed']} MHz)."
+            f"GPU {gpu_name} has a higher memory speed ({gpu_info['memory speed']} MHz) than the current GPU ({current_hardware_info['gpu_memory_speed']} MHz)."
         )
 
     set_gpu_memory_limit(gpu_info["memory"], 0)
@@ -201,12 +156,12 @@ def set_physical_gpu_limits(gpu_name: str):
     )
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
-    '''
+    """
     if not has_tensor_cores(gpu_name):
         torch.backends.cuda.matmul.allow_tf32 = False
         torch.backends.cudnn.allow_tf32 = False
         print(f"Disabled TF32 tensor core usage due to lack of tensor cores in {gpu_name}.")
-    '''
+    """
     print(f"Set GPU memory speed to {gpu_info['memory speed']} MHz")
 
 
@@ -215,36 +170,9 @@ def set_physical_gpu_limits(gpu_name: str):
 #####################################
 
 
-def set_cpu_limit(cpu_name: str):
-    cpu_info = get_cpu_info(cpu_name)
-    if not cpu_info:
-        raise ValueError(f"CPU {cpu_name} not found in database.")
-    current_cpu_info = get_current_cpu_info()
-
-    if cpu_info["cores"] > int(current_cpu_info["cores"]):
-        raise ValueError(
-            f"CPU {cpu_name} has more cores ({cpu_info["cores"]}) than the current CPU ({current_cpu_info['cores']})."
-        )
-    if cpu_info["turbo clock"] > int(current_cpu_info["clock speed"]):
-        print(
-            f"CPU {cpu_name} has a higher clock speed ({cpu_info['turbo clock']} MHz) than the current CPU ({current_cpu_info['clock speed']} MHz)."
-        )
-
-    cmd = [
-        "sudo -S",
-        "cpupower",
-        "frequency-set",
-        "-u",
-        f"{cpu_info['turbo clock']}GHz",
-    ]
-    run(cmd)
-    print(f"Set CPU clock speed to {cpu_info['turbo clock']} MHz")
-    return cpu_info["cores"]
-
-
 def get_cpu_info(cpu_name: str):
     cpu_info = None
-    with open("./bouquetfl/hardwareconf/cpus.csv") as file:
+    with open("hardwareconf/cpus.csv") as file:
         cpus = pd.read_csv(file, header=None).to_numpy()
     for cpu in cpus:
         if cpu[0] == cpu_name:
@@ -268,14 +196,31 @@ def get_cpu_info(cpu_name: str):
 
     return cpu_info
 
-def get_available_cpu_cores():
-    return psutil.cpu_count(logical=False)
 
-def get_current_cpu_info():
-    cpu_info = {}
-    cpu_info["cores"] = get_available_cpu_cores()
-    cpu_info["clock speed"] = psutil.cpu_freq().max
-    return cpu_info
+def set_cpu_limit(cpu_name: str):
+    cpu_info = get_cpu_info(cpu_name)
+    if not cpu_info:
+        raise ValueError(f"CPU {cpu_name} not found in database.")
+
+    if cpu_info["cores"] > int(current_hardware_info["cpu_cores"]):
+        raise ValueError(
+            f"CPU {cpu_name} has more cores ({cpu_info['cores']}) than the current CPU ({current_hardware_info['cpu_cores']})."
+        )
+    if cpu_info["base clock"] > int(current_hardware_info["cpu_clock_speed"]):
+        print(
+            f"CPU {cpu_name} has a higher clock speed ({cpu_info['base clock']} MHz) than the current CPU ({current_hardware_info['cpu_clock_speed']} MHz)."
+        )
+
+    cmd = [
+        "sudo -S",
+        "cpupower",
+        "frequency-set",
+        "-u",
+        f"{cpu_info['base clock']}GHz",
+    ]
+    run(cmd)
+    print(f"Set CPU clock speed to {cpu_info['base clock']} MHz")
+    return cpu_info["cores"]
 
 
 def reset_cpu_limit():
@@ -296,12 +241,3 @@ def reset_all_limits():
     reset_gpu_clocks(0)
     reset_gpu_memory_clocks(0)
     print("Reset memory limit and clock speeds to default")
-
-#####################################
-############ RAM tools ##############
-#####################################
-
-def get_available_ram_gb() -> int:
-    ram = psutil.virtual_memory()
-    available_ram_gb = int(ram.available / (1024**3))
-    return available_ram_gb

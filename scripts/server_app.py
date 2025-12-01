@@ -1,17 +1,16 @@
 """bouquetfl: A Flower / PyTorch app."""
 
+import os
+
 from flwr.common import Context
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
 
-from bouquetfl import power_clock_tools as pct
+from bouquetfl.utils.sampler import generate_hardware_config
 
 experiment = "cifar100"
 if experiment == "cifar100":
-    from bouquetfl.data import cifar100 as flower_baseline
-
-
-pct.reset_all_limits()
+    from task import cifar100 as flower_baseline
 
 
 def server_fn(context: Context):
@@ -28,6 +27,10 @@ def server_fn(context: Context):
         return client_config
 
     fraction_fit = context.run_config["fraction-fit"]
+
+    # Generate hardware profiles for clients
+    if not os.path.exists("./config/federation_client_hardware.yaml"):
+        generate_hardware_config(num_clients=context.run_config["num-clients"])
 
     # Initialize model parameters
     initial_parameters = flower_baseline.get_initial_parameters()
