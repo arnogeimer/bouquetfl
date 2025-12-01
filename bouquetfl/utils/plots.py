@@ -57,14 +57,6 @@ def plot_gpu_average_training_times():
         )
     )
 
-    gpu_chart.configure_view(
-    continuousHeight=600,
-    continuousWidth=800
-        ).configure_scale(
-            bandPaddingInner=0,
-            bandPaddingOuter=0
-        )
-
     gpu_chart.save("plots/timetable_gpu.pdf")
     gpu_chart.save("plots/timetable_gpu.png")
 
