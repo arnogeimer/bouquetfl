@@ -8,6 +8,7 @@ import pandas as pd
 import psutil
 import torch
 
+from numba import cuda
 # This is required when running on Ubuntu-servers without a GUI, else just us PlaintextKeyring from keyring
 from keyrings.alt.file import PlaintextKeyring
 
@@ -102,6 +103,33 @@ def reset_gpu_memory_clocks(gpu_index: int):
     cmd = ["sudo -S", "nvidia-smi", "-i", str(gpu_index), "--reset-memory-clocks"]
     run(cmd)
 
+def get_available_gpu_cores():
+
+    cc_cores_per_SM_dict = {
+        (2,0) : 32,
+        (2,1) : 48,
+        (3,0) : 192,
+        (3,5) : 192,
+        (3,7) : 192,
+        (5,0) : 128,
+        (5,2) : 128,
+        (6,0) : 64,
+        (6,1) : 128,
+        (7,0) : 64,
+        (7,5) : 64,
+        (8,0) : 64,
+        (8,6) : 128,
+        (8,9) : 128,
+        (9,0) : 128,
+        (10,0) : 128,
+        (12,0) : 128
+        }
+    device = cuda.get_current_device()
+    my_sms = getattr(device, 'MULTIPROCESSOR_COUNT')
+    my_cc = device.compute_capability
+    cores_per_sm = cc_cores_per_SM_dict.get(my_cc)
+    total_cores = cores_per_sm*my_sms
+    return total_cores
 
 def get_current_gpu_info():
     query = "name,memory.total,clocks.max.graphics,clocks.max.memory"
@@ -111,11 +139,13 @@ def get_current_gpu_info():
         text=True,
     )
     name, mem_total, max_graphics, max_mem = result.stdout.strip().split(", ")
+    total_cores = get_available_gpu_cores()
     return {
         "name": name,
         "memory": int(int(mem_total) / 1024),
         "clock speed": int(max_graphics),
         "memory speed": int(max_mem),
+        "cores": total_cores,
     }
 
 
@@ -238,10 +268,12 @@ def get_cpu_info(cpu_name: str):
 
     return cpu_info
 
+def get_available_cpu_cores():
+    return psutil.cpu_count(logical=False)
 
 def get_current_cpu_info():
     cpu_info = {}
-    cpu_info["cores"] = psutil.cpu_count(logical=False)
+    cpu_info["cores"] = get_available_cpu_cores()
     cpu_info["clock speed"] = psutil.cpu_freq().max
     return cpu_info
 
@@ -264,3 +296,12 @@ def reset_all_limits():
     reset_gpu_clocks(0)
     reset_gpu_memory_clocks(0)
     print("Reset memory limit and clock speeds to default")
+
+#####################################
+############ RAM tools ##############
+#####################################
+
+def get_available_ram_gb() -> int:
+    ram = psutil.virtual_memory()
+    available_ram_gb = int(ram.available / (1024**3))
+    return available_ram_gb

@@ -16,6 +16,7 @@ import os
 import subprocess
 import yaml
 import torch
+from hardwareconf.sampler import generate_hardware_sample
 
 def create_cuda_restricted_env(gpu_name: str, current_cores: int):
 
@@ -61,7 +62,7 @@ class FlowerClient(Client):
 
     def fit(self, ins: FitIns) -> FitRes:
         # Save the global model parameters to a file to be loaded by trainer.py
-    
+
         if not os.path.exists(f"./bouquetfl/checkpoints/global_params_round_{ins.config['server_round']}.npz"):
             ndarrays_original = parameters_to_ndarrays(ins.parameters)
             np.savez(f"./bouquetfl/checkpoints/global_params_round_{ins.config['server_round']}.npz", *ndarrays_original)
@@ -71,11 +72,8 @@ class FlowerClient(Client):
                 gpu_name = client_config[f"client_{self.client_id}"]["gpu"]
                 cpu_name = client_config[f"client_{self.client_id}"]["cpu"]
                 ram_size = client_config[f"client_{self.client_id}"]["ram_gb"]
-        except Exception as e:
-            print(
-                f"Could not load client hardware configuration from YAML file. Will use default hardware settings. Error: {e} \n Loading default values instead."
-            )
-            ram_size = 2  # in GB
+        except FileNotFoundError:
+            gpu_name, cpu_name, ram_size = generate_hardware_sample()
         env = create_cuda_restricted_env(gpu_name, self.current_cores)
 
         start_mps()
