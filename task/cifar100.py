@@ -203,7 +203,7 @@ client_resources: dict = {
     "num_gpus": 0.1,
 }
 
-
+'''
 def estimate_training_memory_usage(batch_size: int = 64):
     # https://discuss.pytorch.org/t/how-to-deal-with-excessive-memory-usages-of-pytorch/126098/5
     acts = []
@@ -348,3 +348,4 @@ def estimate_training_memory_usage_on_gpu(batch_size: int = 64, partition_id: in
     total_mb = total_nb_elements / 1e6
     print(f"Training will use a total of around {total_mb:.2f} MB")
     return total_mb
+'''
