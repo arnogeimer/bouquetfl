@@ -1,0 +1,64 @@
+client_0:
+  cpu: Ryzen 5 5500X3D
+  gpu: GeForce GTX 1650
+  ram_gb: 16
+client_1:
+  cpu: Ryzen 7 5800H
+  gpu: GeForce GTX 1650 SUPER
+  ram_gb: 16
+client_10:
+  cpu: Ryzen 7 5700X3D
+  gpu: GeForce RTX 3050
+  ram_gb: 16
+client_11:
+  cpu: Ryzen 5 2400G
+  gpu: GeForce RTX 2060
+  ram_gb: 16
+client_12:
+  cpu: Ryzen 5 4500U
+  gpu: GeForce RTX 3060 Ti
+  ram_gb: 16
+client_13:
+  cpu: Ryzen 5 5500GT
+  gpu: GeForce RTX 3070
+  ram_gb: 16
+client_14:
+  cpu: Ryzen 7 5700X
+  gpu: GeForce RTX 5060
+  ram_gb: 16
+client_15:
+  cpu: Ryzen 5 2600X
+  gpu: GeForce GTX 1660 Ti
+  ram_gb: 16
+client_2:
+  cpu: Ryzen 7 3700X
+  gpu: GeForce GTX 1050 Ti
+  ram_gb: 12
+client_3:
+  cpu: FX-6300
+  gpu: GeForce RTX 3050
+  ram_gb: 8
+client_4:
+  cpu: Processor N150
+  gpu: GeForce RTX 3060 Ti
+  ram_gb: 16
+client_5:
+  cpu: Ryzen 7 1700
+  gpu: Radeon RX 580
+  ram_gb: 16
+client_6:
+  cpu: Ryzen 7 5800H
+  gpu: GeForce RTX 2060
+  ram_gb: 16
+client_7:
+  cpu: Ryzen 5 PRO 4650U
+  gpu: Radeon RX 570
+  ram_gb: 8
+client_8:
+  cpu: Ryzen 5 7535HS
+  gpu: GeForce GTX 1060
+  ram_gb: 16
+client_9:
+  cpu: Ryzen 5 4500U
+  gpu: GeForce RTX 3050
+  ram_gb: 16

@@ -9,8 +9,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import (DirichletPartitioner,
-                                       ExponentialPartitioner, SizePartitioner)
+from flwr_datasets.partitioner import (
+    DirichletPartitioner,
+    ExponentialPartitioner,
+    SizePartitioner,
+)
 
 # We use flwr-datasets to create our federated dataset
 

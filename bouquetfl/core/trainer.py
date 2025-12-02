@@ -9,9 +9,11 @@ import torch
 from flwr.common.parameter import parameters_to_ndarrays
 
 from bouquetfl.utils import power_clock_tools as pct
-from bouquetfl.utils.filesystem import (load_client_hardware_config,
-                                        save_load_and_training_times,
-                                        save_ndarrays)
+from bouquetfl.utils.filesystem import (
+    load_client_hardware_config,
+    save_load_and_training_times,
+    save_ndarrays,
+)
 
 os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
