@@ -14,15 +14,11 @@ keyring.set_keyring(PlaintextKeyring())
 service = "power_clock_tools_service"
 username = "local_user"
 
-# Before using the tools, run this once to store your sudo password securely.
-# password = input("Enter password: ")
-
-# keyring.set_password(service, username, password)
-# print("Password saved securely.")
-
 password = keyring.get_password(service, username)
 if password is None:
-    raise RuntimeError("No password found in keyring — run setup script first.")
+    password = input("Enter password: ")
+    keyring.set_password(service, username, password)
+    print("Password saved securely.")
 
 with open("config/local_hardware_parameters.yaml", "r") as stats_file:
     current_hardware_info = yaml.safe_load(stats_file)
