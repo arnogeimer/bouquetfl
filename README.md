@@ -44,7 +44,16 @@ Verify the installation:
 nvidia-smi
 ```
 
+### 3. Install cpupower
+
+```bash
+sudo apt update
+sudo apt install linux-tools-$(uname -r) linux-tools-common
+```
+
 ### 3. Install uv
+
+We rely on uv as its Python environment manager because system-level subprocesses are invoked through uv run to ensure a consistent runtime environment; users may substitute a different environment manager by adapting the corresponding command calls in the code.
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -93,4 +102,5 @@ Clients are executed sequentially due to global hardware settings.
 BouquetFL cannot emulate hardware more powerful than the host machine.
 
 GPU support currently requires NVIDIA hardware.
+
 
