@@ -76,8 +76,10 @@ def run_training_process_in_env(client_id: int, ins) -> tuple[Status, Parameters
             "--num_rounds",
             f"{ins.config['num_rounds']}",
         ],
+        stdin=subprocess.PIPE,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        text=True,
         env=env,
     )
 
