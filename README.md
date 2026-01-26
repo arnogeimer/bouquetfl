@@ -76,11 +76,11 @@ BouquetFL integrates directly into the standard Flower workflow.
 
 BouquetFL applies hardware limits using system-level tools such as cpupower and nvidia-smi, which require elevated privileges.
 
-**On the first run, you will be prompted for your sudo password.**
+- On the first run, you will be prompted for your sudo password.
 
-**The password is stored securely using the system keyring.**
+- The password is stored securely using the system keyring.
 
-**Subsequent runs will not prompt again.**
+- Subsequent runs will not prompt again.
 
 ### Example Hardware Configuration
 
@@ -102,5 +102,6 @@ Clients are executed sequentially due to global hardware settings.
 BouquetFL cannot emulate hardware more powerful than the host machine.
 
 GPU support currently requires NVIDIA hardware.
+
 
 
