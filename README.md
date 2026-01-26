@@ -1,174 +1,95 @@
-# 💐 bouquetfl: Federated Hardware Simulation with Flower 💐
+# 💐 BouquetFL
 
-Simulate heterogeneous client hardware in **federated learning**, all on a single machine.  
-This framework allows you to mimic clients with limited CPU, GPU, and RAM resources, enabling research into how federated learning behaves on lower-grade hardware without needing actual diverse devices.  
+**BouquetFL** is a framework for simulating *heterogeneous client hardware* in **Federated Learning** using the [Flower](https://flower.ai) framework.  
+It allows researchers to emulate clients with different CPU, GPU, and RAM capabilities **on a single physical machine** by enforcing hardware-level resource constraints at runtime.
 
-**Bouquet** - from the French word for “a bunch of flowers” - reflects how this project gathers many different *“flowers”* (clients built on the [Flower](https://flower.dev/) framework) into a single federated learning environment, each representing a unique hardware profile.
+BouquetFL is designed for studying realistic cross-device federated learning scenarios—where client devices differ widely in computational power—without requiring access to large, heterogeneous hardware testbeds. Each simulated client runs sequentially under a configurable hardware profile, enabling controlled and reproducible experimentation.
 
+---
 
+## System Dependencies
 
-## 📝 Introduction
-Federated learning often assumes diverse client devices, but most research setups use uniform, high-end hardware.  
-This project provides a way to **simulate real-world device heterogeneity**:  
+BouquetFL relies on several **system-level tools** to enforce hardware constraints. These must be installed outside of Python.
 
-- We maintain a **large list of consumer-grade GPUs and CPUs**.  
-- Clients are spawned as **subprocesses**, each constrained by the specs of a chosen GPU–CPU combination.  
-- Each subprocess applies resource limits (GPU threads, CPU cores, RAM) to mimic that hardware profile.  
+### Operating System
+- **Ubuntu Linux** (tested on 22.04 / 24.04)
 
-This enables federated learning experiments that reflect a more realistic hardware distribution without requiring dozens of different physical devices.  
+### Required System Tools
+- **sudo access** (required to control hardware settings)
+- **NVIDIA GPU + CUDA**
+  - `nvidia-smi` (comes with NVIDIA drivers)
+- **cpupower** (CPU frequency control)
+- **systemd** (for memory cgroup limits)
+- **uv** (Python project runner)
 
+> Python dependencies (e.g., `flwr`, `torch`) are managed automatically via the project configuration.
 
+---
 
-## ✨ Features
-- Simulate **CPU, GPU, and RAM constraints** for Flower clients.  
-- Run **different hardware profiles** within the same federation.  
-- Supports **multiple experiments** across different domains.
+## Installation
 
+### 1. Install system packages
 
-## 📦 Dependencies
-- Python **3.10+**  
-- [PyTorch 2.7.0](https://pytorch.org/)  
-- [Flower 1.20.0](https://flower.dev/)  
-- [flwr-datasets 0.5.0](https://flower.dev/docs/datasets.html)
-- [nvidia-smi](https://developer.nvidia.com/system-management-interface)
-- [Nvidia Multi-Processor Service](https://docs.nvidia.com/deploy/mps/index.html) capable GPU (Volta+, i.e. GeForce GTX 16 series and after)
-- Root access (`sudo`) for simulating hardware restrictions  
+```bash
+sudo apt update
+sudo apt install -y linux-tools-common linux-tools-generic cpupower systemd
+```
 
+### 2. Install NVIDIA drivers
 
+Follow NVIDIA’s official instructions for your GPU and Ubuntu version.
 
-## 🖥️ Example Hardware Profiles
-This project can simulate a wide range of common consumer hardware from:  
+Verify the installation:
+```bash
+nvidia-smi
+```
 
-### GPUs
-- **NVIDIA GeForce GTX & RTX series**
-- **AMD Radeon RX 500 series**
-- **Intel Arc Series**
+### 3. Install uv
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-### CPUs
-- **Intel Core**
-- **AMD Ryzen, EPYC & Athlon**
+Restart your shell and verify:
+```bash
+uv --version
+```
 
-📂 See the full [GPU list](bouquetfl/hardwareconf/gpus.csv) and [CPU list](bouquetfl/hardwareconf/cpus.csv) for all supported profiles.  
+### Running BouquetFL
 
-Each simulated client process enforces limits (cores, threads, memory, GPU scheduling) to approximate the chosen hardware. Below is a real example of the training speed of different clients configurations.
+From the project root, run:
+```bash
+flwr run .
+```
 
+BouquetFL integrates directly into the standard Flower workflow.
 
-![Toy example of capabilities: simulating hardware profiles and keeping track of federation process](https://github.com/arnogeimer/bouquetfl/blob/main/plots/timetable_gpu.png)
+### First Run: sudo Password Handling
 
-## 📊 Experiments
-We provide experiment setups for:  
+BouquetFL applies hardware limits using system-level tools such as cpupower and nvidia-smi, which require elevated privileges.
 
-- **Image classification**  
-  - Datasets: [CIFAR-100](https://www.cs.toronto.edu/~kriz/cifar.html), [Tiny-ImageNet](https://www.kaggle.com/c/tiny-imagenet)  
-  - Models: Any suitable architecture from [timm](https://github.com/huggingface/pytorch-image-models)  
+*On the first run, you will be prompted for your sudo password.
 
-- **Large language model finetuning**  
-  - Dataset: [Alpaca-GPT4](https://huggingface.co/datasets/vicgalle/alpaca-gpt4)  
-  - Model: [OpenLLaMA 3B v2](https://huggingface.co/openlm-research/open_llama_3b_v2)  
+*The password is stored securely using the system keyring.
 
+*Subsequent runs will not prompt again.
 
-## ⚠️ Limitations
-- Cannot simulate **better hardware** than the host device (e.g. a GTX 2060 cannot simulate an RTX 3080).  
-- Requires **sudo** access.  
-- Currently supports **only one client at a time**.  
-- This is a **simulation**, not a real hardware replacement.
-- Only supports **Nvidia hardware** (for now), due to reliance on nvidia-smi.
+### Example Hardware Configuration
 
-## ⚙️ How It Works
+Client hardware profiles are defined using a YAML file.
 
-This project simulates a wide variety of client hardware profiles **by programmatically constraining local system resources** during the training of each [Flower](https://flower.dev/) federated client.  
-All constraints are applied at runtime so that multiple, heterogeneous “virtual clients” can be successively emulated on a single machine.
+```yaml
+client_0:
+  cpu: Ryzen 3 3100
+  gpu: GeForce GTX 1080
+  ram_gb: 16
+```
 
-### CPU
-* **Frequency capping** – Uses [`cpupower`](https://linux.die.net/man/1/cpupower) to temporarily set the CPU’s maximum clock (`-u`) and minimum clock (`-d`) during training.  
-* **Core limitation** – Reduces the number of CPU cores the client can effectively use by controlling the number of **DataLoader workers** in the training loop.
+BouquetFL uses these profiles to enforce corresponding CPU, GPU, and memory limits when spawning each client.
 
-### RAM
-* **Memory ceiling** – Each training process is launched through:
-  ```bash
-  systemd-run --user --scope -p MemoryMax=<limit> …
-  ```
-  so the Linux systemd cgroup enforces a hard upper bound on RAM usage.
+### Notes & Limitations
 
-### GPU
+Clients are executed sequentially due to global hardware settings.
 
-* **Memory limit** – Calls:
+BouquetFL cannot emulate hardware more powerful than the host machine.
 
-  ```python
-  torch.cuda.set_per_process_memory_fraction(fraction, device)
-  ```
-  to cap the fraction of GPU memory available to the client.
-
-* **Clock speed lock** – Uses:
-  ```bash
-  nvidia-smi -lock-gpu-clocks <min>,<max>        # lock GPU graphics clocks
-  nvidia-smi -lock-memory-clocks <min>,<max>        # lock GPU memory clocks
-  ```
-  to fix GPU and memory clocks at the desired frequencies.
-
-* **Core usage fraction** – Launches the training in a subprocess with:
-  ```python
-  os.environ["CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"] = "<percentage>"
-  ```
-  so that **NVIDIA Multi-Process Service (MPS)** restricts the fraction of CUDA cores allocated relative to the total cores of the host GPU.
-
-Note: All these constraints are runtime-only—they simulate weaker hardware but cannot exceed the capabilities of the physical machine.
-
-## 🗺️ Roadmap
-- Add **timekeeping** to record and showcase how long each client configuration takes to complete training and communication. ☑️
-- Add random **client hardware generation** based on current most popular devices. ☑️
-- Add **location simulation** (to model upload/download latency).  
-- Support **parallel client spawning** (multiple clients at once).
-- Add **mobile devices** (e.g., phones, Raspberry Pi, etc.) as available options.
-- Allow users to **add custom hardware specifications** for new CPU/GPU profiles.
-- Support for **AMD GPUs**.
-- Add **per-client resource monitoring** for in-depth analysis.
-
-
-
-## 📜 License
-This project is licensed under the **MIT License** (open and permissive).  
-
-
-
-## 🙏 Acknowledgements
-- [Flower](https://flower.dev/) for federated learning framework  
-- [PyTorch](https://pytorch.org/)  
-- [timm](https://github.com/huggingface/pytorch-image-models)  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+GPU support currently requires NVIDIA hardware.
