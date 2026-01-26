@@ -1,8 +1,8 @@
 import shutil
+import subprocess
 
 import keyring
 import pandas as pd
-import subprocess
 import torch
 import yaml
 
@@ -29,8 +29,8 @@ with open("config/local_hardware_parameters.yaml", "r") as stats_file:
 
 
 def run(cmd):
-    #command = " ".join(cmd)
-    
+    # command = " ".join(cmd)
+
     subprocess.run(
         ["sudo", "-S"] + cmd,
         input=password + "\n",
@@ -39,7 +39,7 @@ def run(cmd):
         stderr=subprocess.DEVNULL,
         check=True,
     )
-    #os.system("echo %s | %s" % (password, command))
+    # os.system("echo %s | %s" % (password, command))
 
 
 def require_sudo():
@@ -76,11 +76,7 @@ def lock_gpu_clocks(gpu_index: int, min_mhz: int, max_mhz: int):
 
 def reset_gpu_clocks(gpu_index: int):
     # Requires sudo; only supported on Volta+.
-    cmd = [
-        "nvidia-smi", 
-        "-i", 
-        str(gpu_index), 
-        "--reset-gpu-clocks"]
+    cmd = ["nvidia-smi", "-i", str(gpu_index), "--reset-gpu-clocks"]
     run(cmd)
 
 
@@ -109,10 +105,7 @@ def has_tensor_cores(gpu_name: str) -> bool:
 
 def reset_gpu_memory_clocks(gpu_index: int):
     # Requires sudo; only supported on Volta+.
-    cmd = [
-        "nvidia-smi", 
-        "-i", str(gpu_index), 
-        "--reset-memory-clocks"]
+    cmd = ["nvidia-smi", "-i", str(gpu_index), "--reset-memory-clocks"]
     run(cmd)
 
 
@@ -171,7 +164,9 @@ def set_physical_gpu_limits(gpu_name: str):
         torch.backends.cudnn.allow_tf32 = False
         print(f"Disabled TF32 tensor core usage due to lack of tensor cores in {gpu_name}.")
     """
-    print(f"GPU memory speed: {gpu_info['memory speed']} MHz; GPU memory limit: {gpu_info['memory']} GB;  GPU clock speed: {gpu_info['clock speed']} MHz")
+    print(
+        f"GPU memory speed: {gpu_info['memory speed']} MHz; GPU memory limit: {gpu_info['memory']} GB;  GPU clock speed: {gpu_info['clock speed']} MHz"
+    )
 
 
 #####################################

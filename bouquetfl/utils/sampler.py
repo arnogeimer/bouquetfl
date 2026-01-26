@@ -12,7 +12,7 @@ from bouquetfl.utils.localinfo import get_all_local_info
 
 
 try:
-    with open("config/local_hardware_parameters.yaml", "r") as stats_file:
+    with open("config/local_hardware.yaml", "r") as stats_file:
         hardware_stats = yaml.safe_load(stats_file)
     gpu_mem, gpu_clock, gpu_mem_speed, gpu_cores = (
         hardware_stats.get("gpu_memory", None),
@@ -26,7 +26,7 @@ try:
     ram = hardware_stats.get("ram_gb", None)
 except FileNotFoundError:
     local_info = get_all_local_info()
-    with open("config/local_hardware_parameters.yaml", "w") as stats_file:
+    with open("config/local_hardware.yaml", "w") as stats_file:
         yaml.dump(local_info, stats_file)
     gpu_mem, gpu_clock, gpu_mem_speed, gpu_cores = (
         local_info.get("gpu_memory", None),
@@ -102,9 +102,11 @@ def _generate_ram_sample() -> int:
     ram_options = [4, 8, 12, 16, 24, 32, 48, 64]
     probabilities = np.array(
         [0.0162, 0.0838, 0.0261, 0.4149, 0.0185, 0.3593, 0.0109, 0.0435]
-    )
+    ) # Directly sampled from Steam hardware survey
     probabilities = probabilities / np.sum(probabilities)
     sample_compatible = False
+    if ram <= 4:
+        return ram.tolist()
     while not sample_compatible:
         sampled_ram = np.random.choice(ram_options, p=probabilities, replace=True)
         if sampled_ram <= ram:
