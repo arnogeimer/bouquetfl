@@ -19,12 +19,9 @@ def server_fn(context: Context):
 
     def on_fit_client_config_fn(server_round: int) -> dict:
         """Return training configuration dict for each round."""
-        client_config = {
-            "server_round": server_round,
-            "num_rounds": num_rounds,
-            # You can add more configuration parameters here
-        }
-        return client_config
+        config = context.run_config
+        config["server_round"] = server_round
+        return config
 
     fraction_fit = context.run_config["fraction-fit"]
 

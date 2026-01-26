@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import torch
 from flwr.common.parameter import parameters_to_ndarrays
+import json, argparse
+
 
 from bouquetfl.utils import power_clock_tools as pct
 from bouquetfl.utils.filesystem import (
@@ -36,12 +38,14 @@ args_list = [
         {"type": str, "default": "cifar100", "help": "Dataset to use for training."},
     ),
     ("--client_id", {"type": int, "default": 0, "help": "Client ID."}),
-    ("--round", {"type": int, "default": 1, "help": "    Round number."}),
-    ("--num_rounds", {"type": int, "default": 1, "help": "Total number of rounds."}),
+    ("--config", {"type": str, "default": "", "help": "Path to config from pyproject.toml"})
 ]
 for arg, kwargs in args_list:
     parser.add_argument(arg, **kwargs)
 args = parser.parse_args()
+
+with open(args.config) as f:
+    cfg = json.load(f)
 
 # Load dataset-specific configurations and training calls
 
@@ -51,8 +55,8 @@ modules = {
     "tiny_imagenet": "task.tiny_imagenet",
 }
 
-if args.experiment in modules:
-    flower_baseline = importlib.import_module(modules[args.experiment])
+if cfg["experiment"] in modules:
+    flower_baseline = importlib.import_module(modules[cfg["experiment"]])
 else:
     raise ValueError("Please specify a dataset and model.")
 
@@ -68,7 +72,7 @@ def train_model():
     model = flower_baseline.get_model()
     try:
         ndarrays_original = np.load(
-            f"checkpoints/global_params_round_{args.round}.npz",
+            f"checkpoints/global_params_round_{cfg["server_round"]}.npz",
             allow_pickle=True,
         )
         ndarrays_original = [ndarrays_original[key] for key in ndarrays_original]
@@ -84,35 +88,44 @@ def train_model():
 
     # Load data (on CPU)
     start_data_load_time = timeit.default_timer()
-    trainloader = flower_baseline.load_data(client_id, num_workers=num_cpu_cores)
+    trainloader = flower_baseline.load_data(client_id, num_clients = cfg["num-clients"], num_workers=num_cpu_cores, batch_size=cfg["batch_size"])
     data_load_time = timeit.default_timer() - start_data_load_time
 
     # Train model (on GPU)
     start_train_time = timeit.default_timer()
     flower_baseline.ndarrays_to_model(model, ndarrays_original)
-    flower_baseline.train(
-        model=model,
-        trainloader=trainloader,
-        epochs=5,
-        device=("cuda" if torch.cuda.is_available() and gpu != "None" else "cpu"),
-    )
-    train_time = timeit.default_timer() - start_train_time
+    try:
+        flower_baseline.train(
+            model=model,
+            trainloader=trainloader,
+            epochs=cfg["local-epochs"],
+            device=("cuda" if torch.cuda.is_available() and gpu != "None" else "cpu"),
+            lr=cfg["learning_rate"],
+        )
+        train_time = timeit.default_timer() - start_train_time
+        # Save updated model parameters
+        save_ndarrays(
+            flower_baseline.ndarrays_from_model(model),
+            f"checkpoints/params_updated_{client_id}.npz",
+        )
 
-    # Save updated model parameters
-    save_ndarrays(
-        flower_baseline.ndarrays_from_model(model),
-        f"checkpoints/params_updated_{client_id}.npz",
-    )
+    except torch.cuda.OutOfMemoryError:
+        train_time = None
+        save_ndarrays(
+            None,
+            f"checkpoints/params_updated_{client_id}.npz",
+        )
+
 
     # Save load and training times
     save_load_and_training_times(
         client_id=client_id,
-        round=args.round,
+        round=cfg["server_round"],
         gpu=gpu,
         cpu=cpu,
         data_load_time=data_load_time,
         train_time=train_time,
-        num_rounds=args.num_rounds,
+        num_rounds=cfg["num-server-rounds"],
     )
 
 

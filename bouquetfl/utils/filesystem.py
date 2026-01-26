@@ -39,6 +39,9 @@ def load_new_client_parameters(client_id: int) -> tuple[Status, Parameters]:
         ndarrays_new = np.load(local_save_path, allow_pickle=True)
         ndarrays_new = [ndarrays_new[key] for key in ndarrays_new]
         os.remove(local_save_path)
+        if ndarrays_new == None:
+            status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
+            return status, None
         # Build and return response
         status = Status(code=Code.OK, message="Success")
         # Serialize ndarray's into a Parameters object

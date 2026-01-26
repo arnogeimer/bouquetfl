@@ -31,7 +31,7 @@ import torch
 class FlowerClient(Client):
     def __init__(
         self,
-        client_id: int,
+        client_id: int = None,
     ) -> None:
         self.client_id = client_id
         self.num_examples = 1
@@ -43,7 +43,7 @@ class FlowerClient(Client):
             f"checkpoints/global_params_round_{ins.config['server_round']}.npz",
         )
 
-        status, parameters_updated = run_training_process_in_env(self.client_id, ins)
+        status, parameters_updated = run_training_process_in_env(client_id = self.client_id, ins = ins)
 
         return FitRes(
             status=status,

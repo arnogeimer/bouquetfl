@@ -76,7 +76,7 @@ fds = dirichlet_based_split(num_clients=36, alpha=0.5)
 
 
 def load_data(
-    partition_id: int, num_clients: int = 36, num_workers: int = 4, batch_size: int = 64
+    partition_id: int, num_clients: int = 36, num_workers: int = 4, batch_size: int = 1024
 ) -> DataLoader:
     partitioner = size_based_split(num_clients)
     fds = FederatedDataset(
@@ -127,12 +127,13 @@ def train(
     trainloader: DataLoader,
     epochs: int = 5,
     device: str = "cuda",
+    lr: float = 1e-3,
     **kwargs,
 ):
     """Train the model on the training set."""
     criterion = torch.nn.CrossEntropyLoss()
     print("Starting training")
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
     for _ in tqdm.trange(epochs):
         for batch in trainloader:
             images, labels = batch["img"].to(device), batch["fine_label"].to(device)

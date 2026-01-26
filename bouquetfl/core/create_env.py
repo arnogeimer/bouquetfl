@@ -4,6 +4,7 @@ import subprocess
 import yaml
 from flwr.common import Status, parameters_to_ndarrays
 from flwr.common.typing import Parameters
+from flwr.common import FitIns
 
 from bouquetfl.utils import power_clock_tools as pct
 from bouquetfl.utils.filesystem import (
@@ -20,10 +21,13 @@ def _create_cuda_restricted_env(gpu_name: str):
         hardware_stats = yaml.safe_load(stats_file)
     current_cores = hardware_stats.get("gpu_cores", None)
     target_cores = gpu_info["cuda cores"]
+    if current_cores < target_cores:
+        print("Emulating a GPU which has more cores than local is impossible.")
+        target_cores = current_cores
     env = os.environ.copy()
     env["CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"] = str(100 * target_cores / current_cores)
     print(
-        f"Creating CUDA MPS env with {target_cores} cores out of {current_cores} ({str(100 * target_cores / current_cores)}%)"
+        f"Creating CUDA MPS env with {target_cores} cores out of {current_cores} ({round(100 * target_cores / current_cores, 2)}%)"
     )
     return env
 
@@ -40,7 +44,8 @@ def _stop_mps():
     print("MPS server has exited.")
 
 
-def run_training_process_in_env(client_id: int, ins) -> tuple[Status, Parameters]:
+def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tuple[Status, Parameters]:
+
 
     save_ndarrays(
         parameters_to_ndarrays(ins.parameters),
@@ -57,6 +62,14 @@ def run_training_process_in_env(client_id: int, ins) -> tuple[Status, Parameters
 
     # We take advantage of systemd-run to limit the RAM usage of the process.
 
+    import json, tempfile, subprocess
+
+    cfg = dict(ins.config)
+
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        json.dump(cfg, f)
+        cfg_path = f.name
+
     child = subprocess.Popen(
         [
             "systemd-run",
@@ -67,18 +80,14 @@ def run_training_process_in_env(client_id: int, ins) -> tuple[Status, Parameters
             "uv",  # <--- Change this to "python3", "poetry", "pyenv" or corresponding if you don't have uv installed
             "run",
             "bouquetfl/core/trainer.py",
-            "--experiment",
-            f"{'cifar100'}",
             "--client_id",
             f"{client_id}",
-            "--round",
-            f"{ins.config['server_round']}",
-            "--num_rounds",
-            f"{ins.config['num_rounds']}",
+            "--config", 
+            f"{cfg_path}",
         ],
         stdin=subprocess.PIPE,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+    #    stdout=subprocess.DEVNULL,
+    #    stderr=subprocess.DEVNULL,
         text=True,
         env=env,
     )

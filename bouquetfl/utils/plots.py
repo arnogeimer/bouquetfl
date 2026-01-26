@@ -248,10 +248,10 @@ def generate_scatter_plot():
     #ax.grid(which="minor", color="#CCCCCC", linestyle=":")
     ax.plot([0, 1], [0, 1], color="black", linestyle="-", linewidth=0.8, zorder=1, alpha = .6)
     print(gpus)
-    print("spearman", spearmanr(gpu_times, benchmark_times))
-    print("kendall", kendalltau(gpu_times, benchmark_times))
     gpu_times = gpu_times[1:] / 2
     benchmark_times = benchmark_times[1:] / 2
+    print("spearman", spearmanr(gpu_times, benchmark_times))
+    print("kendall", kendalltau(gpu_times, benchmark_times))
     ax.scatter(
         gpu_times,
         benchmark_times,
@@ -384,7 +384,7 @@ def generate_line_plot():
         ax.axvline(x=start + i, color="black", linestyle="--", linewidth=0.5, alpha=0.4)
         start = generation
 
-    ax.set_xticks([0, 5, 9, 13])
+    ax.set_xticks([0, 4, 8, 13])
     ax.set_xticklabels(["GTX 10xx", "GTX 16xx", "RTX 20xx", "RTX 30xx"], ha="left")
 
     for y in [0.4, 0.6, 0.8]:

@@ -61,14 +61,14 @@ clientapp = "scripts.client_app:app"
 
 # Custom config values accessible via `context.run_config`
 [tool.flwr.app.config]
-num-server-rounds = 5
+num-server-rounds = 10
 fraction-fit = 1
 local-epochs = 3
 experiment = "cifar100"
 model = "resnet18"              # model architecture or LLM, optional
-batch_size = 64                 # training batch size
+batch_size = 4096                 # training batch size
 learning_rate = 0.01 
-num-clients = 14
+num-clients = 2
 
 # Default federation to use when running the app
 [tool.flwr.federations]
@@ -76,7 +76,7 @@ default = "local-simulation"
 
 # Local simulation federation with x virtual SuperNodes
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 14       # number of clients
+options.num-supernodes = 2       # number of clients
 options.backend.client-resources.num-cpus = 8       # needed to spawn clients successively, not in parallel
 options.backend.client-resources.num-gpus = 1       # needed to spawn clients successively, not in parallel
 

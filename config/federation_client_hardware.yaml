@@ -1,69 +1,9 @@
 client_0:
   cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1050
+  gpu: GeForce 210
   ram_gb: 16
 
 client_1:
   cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1060
-  ram_gb: 16
-
-client_2:
-  cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1070
-  ram_gb: 16
-
-client_3:
-  cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1080
-  ram_gb: 16
-
-client_4:
-  cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1650
-  ram_gb: 16
-
-client_5:
-  cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1660
-  ram_gb: 16
-
-client_6:
-  cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1660 Ti
-  ram_gb: 16
-
-client_7:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 2060
-  ram_gb: 16
-
-client_8:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 2070
-  ram_gb: 16
-
-client_9:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 2080
-  ram_gb: 16
-
-client_10:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 3050
-  ram_gb: 16
-
-client_11:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 3060
-  ram_gb: 16
-
-client_12:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 3070
-  ram_gb: 16
-
-client_13:
-  cpu: Ryzen 3 3100
   gpu: GeForce RTX 3080
-  ram_gb: 16
+  ram_gb: 32
