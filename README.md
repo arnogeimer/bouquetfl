@@ -97,7 +97,7 @@ BouquetFL uses these profiles to enforce corresponding CPU, GPU, and memory limi
 
 ## Adapting BouquetFL to Your Training Project
 
-BouquetFL is model- and task-agnostic. To use it with a custom dataset or model, simply add a project-specific task file to the `tasks/` directory. This file should contain the data loading logic, model initialization, and training loop for your application. During execution, BouquetFL invokes the task file specified in `pyproject.toml` and applies the configured hardware constraints, allowing existing training code to run unchanged under simulated client hardware.
+BouquetFL is model- and task-agnostic. To use it with a custom dataset or model, simply add a project-specific task file to the `tasks/` directory. This file should contain the data loading logic, model initialization, and training loop for your application. During execution, BouquetFL invokes the task file specified in `pyproject.toml` and applies the hardware constraints configured in `config/federation_client_hardware.yaml`, allowing existing training code to run unchanged under simulated client hardware.
 
 ### Notes & Limitations
 
@@ -106,6 +106,7 @@ Clients are executed sequentially due to global hardware settings.
 BouquetFL cannot emulate hardware more powerful than the host machine.
 
 GPU support currently requires NVIDIA hardware.
+
 
 
 
