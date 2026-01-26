@@ -20,7 +20,7 @@ if password is None:
     keyring.set_password(service, username, password)
     print("Password saved securely.")
 
-with open("config/local_hardware_parameters.yaml", "r") as stats_file:
+with open("config/local_hardware.yaml", "r") as stats_file:
     current_hardware_info = yaml.safe_load(stats_file)
 
 #####################################

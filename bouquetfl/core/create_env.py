@@ -16,7 +16,7 @@ from bouquetfl.utils.filesystem import (
 def _create_cuda_restricted_env(gpu_name: str):
     gpu_info = pct.get_gpu_info(gpu_name)
 
-    with open("./config/local_hardware_parameters.yaml", "r") as stats_file:
+    with open("./config/local_hardware.yaml", "r") as stats_file:
         hardware_stats = yaml.safe_load(stats_file)
     current_cores = hardware_stats.get("gpu_cores", None)
     target_cores = gpu_info["cuda cores"]

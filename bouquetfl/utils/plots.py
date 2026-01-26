@@ -14,6 +14,8 @@ def plot_gpu_average_training_times():
     results["total_load_time"] = np.nan
     results["total_train_time"] = np.nan
 
+    results = results[:14]
+
     num_rounds = int(results.shape[1] / 2 - 2)
 
     time_errors = []
@@ -35,7 +37,9 @@ def plot_gpu_average_training_times():
         load_col_list = [f"{j}load_time" for j in range(1, num_rounds + 1)]
         results["total_train_time"] = results[train_col_list].sum(axis=1)
         results["total_load_time"] = results[load_col_list].sum(axis=1)
-
+    print(results["cpu"])
+    print(results["gpu"])
+    print("HERE", results["total_train_time"])
     # Identify duplicate GPUs and CPUs and average their times
     results["total_train_time"] = results.groupby("gpu")["total_train_time"].transform(
         "mean"
@@ -51,7 +55,7 @@ def plot_gpu_average_training_times():
     print(np.array(results["total_train_time"]))
     # results = zip(results["gpu"], results["total_train_time"] / max(results["total_train_time"]))
 
-    fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
+    _, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.xaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.4)
@@ -135,7 +139,7 @@ def plot_gpu_average_training_times():
 
     plt.show()
     plt.savefig("plots/normalized_benchmark_time_by_gpu.pdf")
-
+#plot_gpu_average_training_times()
 
 """
     df_long = results.melt(
@@ -208,39 +212,30 @@ def generate_scatter_plot():
     ]
 
     gpu_times, benchmark_times = (
-        [
-            1.0,
-            0.39828693,
-            0.31434339,
-            0.24441062,
-            0.61710344,
-            0.38547811,
-            0.33877741,
-            0.31625761,
-            0.27187288,
-            0.23301935,
-            0.29000652,
-            0.19974716,
-            0.16423148,
-            0.1541284,
-        ],
-        [
-            1.0,
-            0.82217285,
-            0.68648432,
-            0.58421893,
-            0.89666904,
-            0.75498738,
-            0.71316818,
-            0.65093918,
-            0.57743605,
-            0.47031862,
-            0.75736589,
-            0.5983617,
-            0.33525454,
-            0.16842222,
-        ],
+        np.array([96.25812109, 39.12650584, 31.15540277, 24.54303205, 59.90921479, 37.90189175,
+        33.42215541, 31.3451803,  27.05915711, 23.49124462, 28.8020803,  20.23592472,
+        16.95063561, 15.94066052]),
+        np.array([
+            5040,
+            9821,
+            13507,
+            15614,
+            7867,
+            11631,
+            12710,
+            14113,
+            16049,
+            18653,
+            10750,
+            15223,
+            22149,
+            25046,
+        ])
     )
+
+    gpu_times = gpu_times / np.mean(gpu_times)
+    benchmark_times = np.abs(benchmark_times - max(benchmark_times) - min(benchmark_times))
+    benchmark_times = benchmark_times / np.mean(benchmark_times)
     fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
 
     from matplotlib.ticker import AutoMinorLocator
@@ -250,35 +245,38 @@ def generate_scatter_plot():
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
     # And a corresponding grid
     ax.grid(which="major", color="#CCCCCC", linestyle="--")
-    ax.grid(which="minor", color="#CCCCCC", linestyle=":")
-    ax.plot([0, 1], [0, 1], color="black", linestyle="-", linewidth=0.8, zorder=1)
-
+    #ax.grid(which="minor", color="#CCCCCC", linestyle=":")
+    ax.plot([0, 1], [0, 1], color="black", linestyle="-", linewidth=0.8, zorder=1, alpha = .6)
+    print(gpus)
     print("spearman", spearmanr(gpu_times, benchmark_times))
     print("kendall", kendalltau(gpu_times, benchmark_times))
-
+    gpu_times = gpu_times[1:] / 2
+    benchmark_times = benchmark_times[1:] / 2
     ax.scatter(
         gpu_times,
         benchmark_times,
-        color="orange",
+        color="#76b900",
         edgecolor="black",
         linewidth=0.6,
         zorder=2,
     )
-    for i, txt in enumerate(gpus):
-        if i in [0, 2, 4, 5, 7, 9, 11, 13]:
+    for i, txt in enumerate(gpus[1:]):
+        if i in [0, 2, 3, 6, 8, 9, 12]:
             print(txt)
             if i == 0:
-                offset = (-25, -2.5)
-            elif i == 4:
+                offset = (-10, 5)
+            elif i == 2:
+                offset = (-10, 5)
+            elif i == 3:
                 offset = (5, -2.5)
-            elif i == 5:
-                offset = (5, -2.5)
-            elif i == 9:
-                offset = (5, -3)
-            elif i == 11:
+            elif i == 6:
+                offset = (5, -5)
+            elif i == 8:
                 offset = (-25, -3)
-            elif i == 13:
+            elif i == 9:
                 offset = (-15.5, 4)
+            elif i == 12:
+                offset = (-5.5, 4)
             ax.annotate(
                 txt.split()[-1],
                 (gpu_times[i], benchmark_times[i]),
@@ -295,25 +293,12 @@ def generate_scatter_plot():
 
 
 def generate_line_plot():
-    gpu_times = [
-        380.50599933,
-        151.55056587,
-        119.60954741,
-        92.99970554,
-        234.81156289,
-        146.67673186,
-        128.90683527,
-        120.3379187,
-        103.44926178,
-        88.66526144,
-        110.34922216,
-        76.00499177,
-        62.49106245,
-        58.64677988,
-    ]
-
-    bmarks = np.array(
-        [
+    
+    gpu_times, bmarks = (
+        np.array([96.25812109, 39.12650584, 31.15540277, 24.54303205, 59.90921479, 37.90189175,
+        33.42215541, 31.3451803,  27.05915711, 23.49124462, 28.8020803,  20.23592472,
+        16.95063561, 15.94066052]),
+        np.array([
             5040,
             9821,
             13507,
@@ -328,27 +313,13 @@ def generate_line_plot():
             15223,
             22149,
             25046,
-        ]
+        ])
     )
+    gpu_times = gpu_times[1:]
+    bmarks = bmarks[1:]
     bmarks = max(bmarks) - bmarks + min(bmarks)
 
-    gpus = [
-        "GeForce GTX 1050",
-        "GeForce GTX 1060",
-        "GeForce GTX 1070",
-        "GeForce GTX 1080",
-        "GeForce GTX 1650",
-        "GeForce GTX 1660",
-        "GeForce GTX 1660 Ti",
-        "GeForce RTX 2060",
-        "GeForce RTX 2070",
-        "GeForce RTX 2080",
-        "GeForce RTX 3050",
-        "GeForce RTX 3060",
-        "GeForce RTX 3070",
-        "GeForce RTX 3080",
-    ]
-    groups = [4, 7, 10, 14]
+    groups = [3, 6, 9, 13]
     start = 0
     from matplotlib.colors import LinearSegmentedColormap
 
@@ -360,10 +331,11 @@ def generate_line_plot():
     for i, generation in enumerate(groups):
         current_gpus = gpu_times[start:generation]
         current_bmarks = bmarks[start:generation]
-        print(current_gpus, current_bmarks)
-        current_gpus = np.array(current_gpus) / max(current_gpus)
-        current_bmarks = np.array(current_bmarks) / max(current_bmarks)
-
+        current_gpus = np.array(current_gpus) / np.mean(current_gpus) / 2
+        current_bmarks = np.array(current_bmarks) / np.mean(current_bmarks) / 2
+        maximum = max(max(current_bmarks), max(current_gpus))
+        current_gpus = current_gpus + 1 - maximum
+        current_bmarks = current_bmarks + 1 - maximum
         if i == 2:
             ax.plot(
                 np.linspace(start + i, generation + i, generation - start),
@@ -415,7 +387,7 @@ def generate_line_plot():
     ax.set_xticks([0, 5, 9, 13])
     ax.set_xticklabels(["GTX 10xx", "GTX 16xx", "RTX 20xx", "RTX 30xx"], ha="left")
 
-    for y in [0.2, 0.4, 0.6, 0.8]:
+    for y in [0.4, 0.6, 0.8]:
         ax.axhline(y=y, color="gray", linestyle="--", linewidth=0.5, alpha=0.4)
     plt.xlabel(" ", fontsize=10)
 
