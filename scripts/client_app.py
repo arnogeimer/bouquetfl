@@ -38,7 +38,6 @@ class FlowerClient(Client):
 
     def fit(self, ins: FitIns) -> FitRes:
         # Save the global model parameters to a file to be loaded by trainer.py
-        pct.reset_all_limits()
         save_ndarrays(
             parameters_to_ndarrays(ins.parameters),
             f"checkpoints/global_params_round_{ins.config['server_round']}.npz",
