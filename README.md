@@ -84,7 +84,7 @@ BouquetFL applies hardware limits using system-level tools such as cpupower and 
 
 ### Example Hardware Configuration
 
-Client hardware profiles are defined using a YAML file.
+Client hardware profiles are defined using a YAML file:
 
 ```yaml
 client_0:
@@ -106,6 +106,7 @@ Clients are executed sequentially due to global hardware settings.
 BouquetFL cannot emulate hardware more powerful than the host machine.
 
 GPU support currently requires NVIDIA hardware.
+
 
 
 
