@@ -83,7 +83,7 @@ def run_training_process_in_env(client_id: int, ins) -> tuple[Status, Parameters
         env=env,
     )
 
-    # Important: wait for the subprocess to finish before spawning the next one
+    # Wait for the subprocess to finish before spawning the next one
     child.wait()
     _stop_mps()
     pct.reset_all_limits()
