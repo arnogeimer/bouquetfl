@@ -1,30 +1,25 @@
 import argparse
+import importlib
+import json
 import os
 import time
 import timeit
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import torch
 from flwr.common.parameter import parameters_to_ndarrays
-import json, argparse
-
 
 from bouquetfl.utils import power_clock_tools as pct
-from bouquetfl.utils.filesystem import (
-    load_client_hardware_config,
-    save_load_and_training_times,
-    save_ndarrays,
-)
+from bouquetfl.utils.filesystem import (load_client_hardware_config,
+                                        save_load_and_training_times,
+                                        save_ndarrays)
 
 os.environ["HF_DATASETS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-import importlib
-
-import pyarrow as pa
-
 pa.set_cpu_count(1)
 
 # Arguments passed by client.py
@@ -33,10 +28,6 @@ parser = argparse.ArgumentParser(
     description="Train a client-specific model with specific hardware settings."
 )
 args_list = [
-    (
-        "--experiment",
-        {"type": str, "default": "cifar100", "help": "Dataset to use for training."},
-    ),
     ("--client_id", {"type": int, "default": 0, "help": "Client ID."}),
     ("--config", {"type": str, "default": "", "help": "Path to config from pyproject.toml"})
 ]
@@ -60,6 +51,7 @@ if cfg["experiment"] in modules:
 else:
     raise ValueError("Please specify a dataset and model.")
 
+from task import cifar100 as mltask
 ####################################
 ############# Training #############
 ####################################
@@ -69,7 +61,7 @@ def train_model():
     client_id = args.client_id
     gpu, cpu, _ = load_client_hardware_config(client_id)
     # Load model and apply global parameters
-    model = flower_baseline.get_model()
+    model = mltask.get_model()
     try:
         ndarrays_original = np.load(
             f"checkpoints/global_params_round_{cfg["server_round"]}.npz",
@@ -77,7 +69,7 @@ def train_model():
         )
         ndarrays_original = [ndarrays_original[key] for key in ndarrays_original]
     except FileNotFoundError:
-        model_parameters = flower_baseline.get_initial_parameters()
+        model_parameters = mltask.get_initial_parameters()
         ndarrays_original = parameters_to_ndarrays(model_parameters)
 
     # Set hardware limits (Ram limit was set in the subprocess environement)
@@ -88,14 +80,14 @@ def train_model():
 
     # Load data (on CPU)
     start_data_load_time = timeit.default_timer()
-    trainloader = flower_baseline.load_data(client_id, num_clients = cfg["num-clients"], num_workers=num_cpu_cores, batch_size=cfg["batch_size"])
+    trainloader = mltask.load_data(client_id, num_clients = cfg["num-clients"], num_workers=num_cpu_cores, batch_size=cfg["batch_size"])
     data_load_time = timeit.default_timer() - start_data_load_time
 
     # Train model (on GPU)
     start_train_time = timeit.default_timer()
-    flower_baseline.ndarrays_to_model(model, ndarrays_original)
+    mltask.ndarrays_to_model(model, ndarrays_original)
     try:
-        flower_baseline.train(
+        mltask.train(
             model=model,
             trainloader=trainloader,
             epochs=cfg["local-epochs"],
@@ -105,15 +97,16 @@ def train_model():
         train_time = timeit.default_timer() - start_train_time
         # Save updated model parameters
         save_ndarrays(
-            flower_baseline.ndarrays_from_model(model),
-            f"checkpoints/params_updated_{client_id}.npz",
+            mltask.ndarrays_from_model(model),
+            f"/tmp/params_updated_{client_id}.npz",
         )
 
-    except torch.cuda.OutOfMemoryError:
+    except torch.OutOfMemoryError:
+        print(f"Client {client_id} has encountered an out-of-memory error.")
         train_time = None
         save_ndarrays(
-            None,
-            f"checkpoints/params_updated_{client_id}.npz",
+            [],
+            f"/tmp/params_updated_{client_id}.npz",
         )
 
 

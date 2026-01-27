@@ -66,7 +66,7 @@ fraction-fit = 1
 local-epochs = 3
 experiment = "cifar100"
 model = "resnet18"              # model architecture or LLM, optional
-batch_size = 4096                 # training batch size
+batch_size = 8192                 # training batch size
 learning_rate = 0.01 
 num-clients = 2
 

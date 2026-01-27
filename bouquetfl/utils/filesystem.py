@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import yaml
 from flwr.common import Code, Status, ndarrays_to_parameters
-from flwr.common.typing import Parameters
+from flwr.common.typing import Parameters, FitRes
 
 
 def delete_unused_files():
@@ -25,23 +25,25 @@ def delete_unused_files():
 
 
 def save_ndarrays(ndarrays: list[np.ndarray], savename: str) -> None:
-    if not os.path.exists(savename):
-        np.savez(
-            savename,
-            *ndarrays,
-        )
+    #if not os.path.exists(savename):
+    np.savez(
+        savename,
+        *ndarrays,
+    )
 
 
 def load_new_client_parameters(client_id: int) -> tuple[Status, Parameters]:
     """Load the updated model parameters for a given client after local training. Found in FlowerClient.fit"""
-    local_save_path = f"checkpoints/params_updated_{client_id}.npz"
+    local_save_path = f"/tmp/params_updated_{client_id}.npz"
     try:
         ndarrays_new = np.load(local_save_path, allow_pickle=True)
         ndarrays_new = [ndarrays_new[key] for key in ndarrays_new]
         os.remove(local_save_path)
-        if ndarrays_new == None:
+        if len(ndarrays_new) == 0:
+            # If OutOfMemory
+            print(f"Client {client_id} has encountered an out-of-memory error.")
             status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
-            return status, None
+            return status, Parameters(tensor_type="", tensors=[])
         # Build and return response
         status = Status(code=Code.OK, message="Success")
         # Serialize ndarray's into a Parameters object
@@ -49,7 +51,7 @@ def load_new_client_parameters(client_id: int) -> tuple[Status, Parameters]:
 
     except FileNotFoundError:
         status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
-        parameters_updated = None
+        parameters_updated = Parameters(tensor_type="", tensors=[])
     return status, parameters_updated
 
 

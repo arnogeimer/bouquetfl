@@ -2,17 +2,17 @@ import os
 import subprocess
 
 import yaml
-from flwr.common import Status, parameters_to_ndarrays
+from flwr.common import FitIns, Status, parameters_to_ndarrays
 from flwr.common.typing import Parameters
-from flwr.common import FitIns
 
 from bouquetfl.utils import power_clock_tools as pct
-from bouquetfl.utils.filesystem import (
-    load_client_hardware_config,
-    load_new_client_parameters,
-    save_ndarrays,
-)
+from bouquetfl.utils.filesystem import (load_client_hardware_config,
+                                        load_new_client_parameters,
+                                        save_ndarrays)
 
+import json
+import subprocess
+import tempfile
 
 def _create_cuda_restricted_env(gpu_name: str):
     gpu_info = pct.get_gpu_info(gpu_name)
@@ -46,10 +46,9 @@ def _stop_mps():
 
 def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tuple[Status, Parameters]:
 
-
     save_ndarrays(
         parameters_to_ndarrays(ins.parameters),
-        f"checkpoints/global_params_round_{ins.config['server_round']}.npz",
+        f"/tmp/global_params_round_{ins.config['server_round']}.npz",
     )
 
     gpu, _, ram = load_client_hardware_config(client_id)
@@ -61,8 +60,6 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
     # Anything else (CPU throttling, RAM limiting, GPU memory and clock limiting) could be done without a separate process.
 
     # We take advantage of systemd-run to limit the RAM usage of the process.
-
-    import json, tempfile, subprocess
 
     cfg = dict(ins.config)
 
@@ -86,8 +83,8 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
             f"{cfg_path}",
         ],
         stdin=subprocess.PIPE,
-    #    stdout=subprocess.DEVNULL,
-    #    stderr=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         text=True,
         env=env,
     )

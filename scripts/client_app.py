@@ -3,16 +3,8 @@
 import logging
 
 from flwr.client import Client, ClientApp
-from flwr.common import (
-    Code,
-    Context,
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    Status,
-    parameters_to_ndarrays,
-)
+from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
+                         FitRes, Status, parameters_to_ndarrays)
 
 from bouquetfl.core.create_env import run_training_process_in_env
 from bouquetfl.utils import power_clock_tools as pct
@@ -40,7 +32,7 @@ class FlowerClient(Client):
         # Save the global model parameters to a file to be loaded by trainer.py
         save_ndarrays(
             parameters_to_ndarrays(ins.parameters),
-            f"checkpoints/global_params_round_{ins.config['server_round']}.npz",
+            f"/tmp/global_params_round_{ins.config['server_round']}.npz",
         )
 
         status, parameters_updated = run_training_process_in_env(client_id = self.client_id, ins = ins)
