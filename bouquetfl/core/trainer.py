@@ -43,7 +43,7 @@ with open(args.config) as f:
 # Load dataset-specific configurations and training calls
 
 modules = {
-    "cifar100": "task.cifar100",
+    "cifar10": "task.cifar10",
     "flowertune_llm": "task.flowertune_llm",
     "tiny_imagenet": "task.tiny_imagenet",
 }
@@ -53,7 +53,7 @@ if cfg["experiment"] in modules:
 else:
     raise ValueError("Please specify a dataset and model.")
 
-from task import cifar100 as mltask
+from task import cifar10 as mltask
 ####################################
 ############# Training #############
 ####################################
@@ -65,14 +65,13 @@ def train_model():
     # Load model and apply global parameters
     model = mltask.get_model()
     try:
-        ndarrays_original = np.load(
-            f"checkpoints/global_params_round_{cfg["server_round"]}.npz",
-            allow_pickle=True,
+        state_dict_global = torch.load(
+            f"checkpoints/global_params_round_{cfg['server-round']}.tp",
+            weights_only=True,
         )
-        ndarrays_original = [ndarrays_original[key] for key in ndarrays_original]
     except FileNotFoundError:
-        model_parameters = mltask.get_initial_parameters()
-        ndarrays_original = parameters_to_ndarrays(model_parameters)
+        state_dict_global = {}
+        state_dict_global = mltask.get_initial_state_dict()
 
     # Set hardware limits (Ram limit was set in the subprocess environement)
     pct.set_physical_gpu_limits(gpu)
@@ -82,13 +81,13 @@ def train_model():
 
     # Load data (on CPU)
     start_data_load_time = timeit.default_timer()
-    trainloader = mltask.load_data(client_id, num_clients = cfg["num-clients"], num_workers=num_cpu_cores, batch_size=cfg["batch_size"])
+    trainloader = mltask.load_data(client_id, num_clients = cfg["num-clients"], num_workers=num_cpu_cores, batch_size=cfg["batch-size"])
     data_load_time = timeit.default_timer() - start_data_load_time
 
     # Train model (on GPU)
     start_train_time = timeit.default_timer()
-    mltask.ndarrays_to_model(model, ndarrays_original)
-    
+    model.load_state_dict(state_dict_global)
+
     writer = SummaryWriter(f"logs/clients_train_times/{gpu} {cpu} {ram}GB")
     try:
         mltask.train(
@@ -96,15 +95,12 @@ def train_model():
             trainloader=trainloader,
             epochs=cfg["local-epochs"],
             device=("cuda" if torch.cuda.is_available() and gpu != "None" else "cpu"),
-            lr=cfg["learning_rate"],
+            lr=cfg["learning-rate"],
         )
         train_time = timeit.default_timer() - start_train_time
         # Save updated model parameters
-        save_ndarrays(
-            mltask.ndarrays_from_model(model),
-            f"/tmp/params_updated_{client_id}.npz",
-        )
-        writer.add_scalar(f"train_time (sec)", train_time, cfg["server_round"])
+        torch.save(model.state_dict(), f"/tmp/params_updated_{client_id}.tp")
+        writer.add_scalar(f"train_time (sec)", train_time, cfg["server-round"])
         writer.flush()
 
     except torch.OutOfMemoryError:
@@ -112,16 +108,16 @@ def train_model():
         train_time = None
         save_ndarrays(
             [],
-            f"/tmp/params_updated_{client_id}.npz",
+            f"/tmp/params_updated_{client_id}.tp",
         )
-        writer.add_scalar(f"train_time (sec)", 1, cfg["server_round"])
+        writer.add_scalar(f"train_time (sec)", 100, cfg["server-round"])
         writer.flush()
 
 
     # Save load and training times
     save_load_and_training_times(
         client_id=client_id,
-        round=cfg["server_round"],
+        round=cfg["server-round"],
         gpu=gpu,
         cpu=cpu,
         data_load_time=data_load_time,

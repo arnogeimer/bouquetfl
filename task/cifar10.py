@@ -57,18 +57,18 @@ def size_based_split(num_clients):
 def dirichlet_based_split(num_clients, alpha):
     partitioner = DirichletPartitioner(
         num_partitions=num_clients,
-        partition_by="fine_label",
+        partition_by="label",
         alpha=alpha,
         min_partition_size=30,
     )
     return FederatedDataset(
-        dataset="uoft-cs/cifar100",
+        dataset="uoft-cs/cifar10",
         partitioners={"train": partitioner},
         trust_remote_code=True,
     )
 
 
-fds = dirichlet_based_split(num_clients=36, alpha=0.5)
+fds = dirichlet_based_split(num_clients=36, alpha=10)
 
 
 def load_data(
@@ -76,7 +76,7 @@ def load_data(
 ) -> DataLoader:
     partitioner = size_based_split(num_clients)
     fds = FederatedDataset(
-        dataset="uoft-cs/cifar100",
+        dataset="uoft-cs/cifar10",
         partitioners={"train": partitioner},
         trust_remote_code=True,
     )
@@ -132,7 +132,7 @@ def train(
     optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
     for _ in tqdm.trange(epochs):
         for batch in trainloader:
-            images, labels = batch["img"].to(device), batch["fine_label"].to(device)
+            images, labels = batch["img"].to(device), batch["label"].to(device)
             optimizer.zero_grad()
             loss = criterion(model(images), labels)
             loss.backward()
@@ -150,8 +150,8 @@ def test(
     if len(testloader) == 0:
         return np.inf, 0
     with torch.no_grad():
-        for batch in testloader:
-            images, labels = batch["img"].to(device), batch["fine_label"].to(device)
+        for batch in testloader: 
+            images, labels = batch["img"].to(device), batch["label"].to(device)
             outputs = model(images)
             loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs.data, 1)
@@ -181,28 +181,22 @@ def ndarrays_to_model(model: torch.nn.ModuleList, params: NDArrays):
 from flwr.common import Context, ndarrays_to_parameters
 from flwr.server.strategy import FedAvg
 
-
-def evaluate_fn(server_round, weights_aggregated, dict, **kwargs):
+def evaluate_fn(server_round, weights_aggregated, config, **kwargs):
     model = get_model()
     ndarrays_to_model(model, weights_aggregated)
     loss, accuracy = test(model, load_global_test_data())
     del model
     torch.cuda.empty_cache()
-    return -loss, {"accuracy": accuracy}
+    return loss, accuracy
 
 
-def get_initial_parameters():
+def get_initial_state_dict():
     init_model = get_model()
-    initial_parameters = ndarrays_to_parameters(ndarrays_from_model(init_model))
+    initial_state_dict = init_model.state_dict()
     del init_model
     torch.cuda.empty_cache()
-    return initial_parameters
+    return initial_state_dict
 
-
-client_resources: dict = {
-    "num_cpus": 1,
-    "num_gpus": 0.1,
-}
 
 """
 def estimate_training_memory_usage(batch_size: int = 64):

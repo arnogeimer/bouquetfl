@@ -7,14 +7,14 @@ from flwr.common.typing import Parameters
 
 from bouquetfl.utils import power_clock_tools as pct
 from bouquetfl.utils.filesystem import (load_client_hardware_config,
-                                        load_new_client_parameters,
+                                        load_new_client_state_dict,
                                         save_ndarrays)
 
 import json
 import subprocess
 import tempfile
 from torch.utils.tensorboard import SummaryWriter
-
+from flwr.app import Context, Message
 writer = SummaryWriter("logs/bouquetrun")
 
 def _create_cuda_restricted_env(gpu_name: str):
@@ -47,14 +47,9 @@ def _stop_mps():
     print("MPS server has exited.")
 
 
-def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tuple[Status, Parameters]:
+def run_training_process_in_env(msg: Message, context: Context) -> tuple[Status, Parameters]:
 
-    save_ndarrays(
-        parameters_to_ndarrays(ins.parameters),
-        f"/tmp/global_params_round_{ins.config['server_round']}.npz",
-    )
-
-    gpu, cpu, ram = load_client_hardware_config(client_id)
+    gpu, cpu, ram = load_client_hardware_config(context.node_config['partition-id'])
 
     client_i = {
     "gpu_name": gpu,
@@ -64,7 +59,7 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
     step = 0
 
     writer.add_text(
-        f"clients/{client_id}/info_json",
+        f"clients/{context.node_config['partition-id']}/info_json",
         "```json\n" + json.dumps(client_i, indent=2) + "\n```",
         step,
     )
@@ -77,7 +72,8 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
 
     # We take advantage of systemd-run to limit the RAM usage of the process.
 
-    cfg = dict(ins.config)
+    cfg = dict(context.run_config)
+    cfg.update(msg.content["config"])
 
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
         json.dump(cfg, f)
@@ -94,7 +90,7 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
             "run",
             "bouquetfl/core/trainer.py",
             "--client_id",
-            f"{client_id}",
+            f"{context.node_config['partition-id']}",
             "--config", 
             f"{cfg_path}",
         ],
@@ -112,5 +108,5 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
 
     # Get new stored model parameters and return to server
 
-    status, parameters_updated = load_new_client_parameters(client_id)
-    return status, parameters_updated
+    status, state_dict_updated = load_new_client_state_dict(context.node_config['partition-id'])
+    return status, state_dict_updated

@@ -1,8 +1,10 @@
 """bouquetfl: A Flower / PyTorch app."""
 
 import logging
+from flwr.app import Message
 
 from flwr.client import Client, ClientApp
+
 from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
                          FitRes, Status, parameters_to_ndarrays)
 
@@ -10,67 +12,79 @@ from bouquetfl.core.create_env import run_training_process_in_env
 from bouquetfl.utils import power_clock_tools as pct
 from bouquetfl.utils.filesystem import save_ndarrays
 
+from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
+from flwr.clientapp import ClientApp
 logger = logging.getLogger(__name__)
 
 import torch
+from task import cifar10 as flower_baseline
 
 #####################################
 ########## Flower Client ############
 #####################################
 
+# Flower ClientApp
+app = ClientApp()
+
 
 # Define Flower Client and client_fn
-class FlowerClient(Client):
-    def __init__(
-        self,
-        client_id: int = None,
-    ) -> None:
-        self.client_id = client_id
-        self.num_examples = 1
 
-    def fit(self, ins: FitIns) -> FitRes:
-        # Save the global model parameters to a file to be loaded by trainer.py
-        save_ndarrays(
-            parameters_to_ndarrays(ins.parameters),
-            f"/tmp/global_params_round_{ins.config['server_round']}.npz",
-        )
+@app.train()
 
-        status, parameters_updated = run_training_process_in_env(client_id = self.client_id, ins = ins)
+def train(msg: Message, context: Context):
+    """Train the model on local data."""
 
-        return FitRes(
-            status=status,
-            parameters=parameters_updated,
-            num_examples=self.num_examples,
-            metrics={"client_id": self.client_id},
-        )
+    state_dict = msg.content["arrays"].to_torch_state_dict()
+    torch.save(state_dict, f"/tmp/global_params_round_{msg.content['config']['server-round']}.pt")
 
-    def evaluate(self, ins: EvaluateIns):
-        from task import cifar100 as flower_baseline
+    _, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
 
-        testset = flower_baseline.load_global_test_data()
-        model = flower_baseline.get_model()
-        ndarrays = parameters_to_ndarrays(ins.parameters)
-        flower_baseline.ndarrays_to_model(model, ndarrays)
-        loss, accuracy = flower_baseline.test(
-            model=model,
-            testloader=testset,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
-        status = Status(code=Code.OK, message="Success")
-        return EvaluateRes(
-            status=status,
-            loss=loss,
-            num_examples=self.num_examples,
-            metrics={"accuracy": accuracy},
-        )
+    testset = flower_baseline.load_global_test_data()
 
+    model = flower_baseline.get_model()
+    model.load_state_dict(state_dict_updated)
+    loss, accuracy = flower_baseline.test(
+        model=model,
+        testloader=testset,
+        device="cuda" if torch.cuda.is_available() else "cpu",
+    )
+    print(context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
 
-def client_fn(context: Context) -> Client:
-    # Return Client instance
-    return FlowerClient(client_id=context.node_config["partition-id"]).to_client()
+    # Construct and return reply Message
+    model_record = ArrayRecord(torch_state_dict = state_dict_updated)
+    metrics = {
+        "num-examples": 1,
+    }
+    metric_record = MetricRecord(metrics)
+    content = RecordDict({"arrays": model_record, "metrics": metric_record})
+    return Message(content=content, reply_to=msg)
 
+@app.evaluate()
+def evaluate(msg: Message, context: Context):
+    """Evaluate the model on local test data."""
 
-# Flower ClientApp
-app = ClientApp(
-    client_fn,
-)
+    state_dict = msg.content["arrays"].to_torch_state_dict()
+    torch.save(state_dict, f"/tmp/global_params_round_{msg.content['config']['server-round']}.pt")
+
+    _, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
+
+    testset = flower_baseline.load_data(partition_id=context.node_config["partition-id"], num_clients = context.run_config["num-clients"], num_workers=4, batch_size=context.run_config["batch-size"])
+
+    model = flower_baseline.get_model()
+    model.load_state_dict(state_dict_updated)
+    loss, accuracy = flower_baseline.test(
+        model=model,
+        testloader=testset,
+        device="cuda" if torch.cuda.is_available() else "cpu",
+    )
+    print(context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
+
+    # Construct and return reply Message
+    metrics = {
+        "loss": loss,
+        "accuracy": accuracy,
+        "num-examples": 1,
+    }
+    metric_record = MetricRecord(metrics)
+    content = RecordDict({"metrics": metric_record})
+    return Message(content=content, reply_to=msg)

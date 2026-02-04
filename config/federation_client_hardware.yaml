@@ -1,20 +1,40 @@
 client_0:
-  cpu: Ryzen 5 PRO 4650U
-  gpu: GeForce RTX 4050 Mobile
+  cpu: Ryzen 7 5700U
+  gpu: GeForce RTX 3060
   ram_gb: 16
 client_1:
-  cpu: Ryzen 7 5700U
-  gpu: GeForce RTX 3060
+  cpu: Ryzen 5 PRO 4650U
+  gpu: GeForce RTX 2060 SUPER
   ram_gb: 16
 client_2:
-  cpu: Processor N100
-  gpu: GeForce GTX 1070
+  cpu: Ryzen 7 5700U
+  gpu: GeForce GTX 1080
   ram_gb: 16
 client_3:
-  cpu: Ryzen 7 5700U
-  gpu: GeForce RTX 3060
+  cpu: Ryzen 7 5825U
+  gpu: GeForce RTX 5060
   ram_gb: 16
 client_4:
+  cpu: Ryzen 7 5700U
+  gpu: GeForce GTX 1070
+  ram_gb: 16
+client_5:
+  cpu: Ryzen 5 PRO 4650U
+  gpu: GeForce RTX 5060 Ti
+  ram_gb: 24
+client_6:
+  cpu: Processor N100
+  gpu: GeForce RTX 4060 Mobile
+  ram_gb: 16
+client_7:
+  cpu: Core i5-13420H
+  gpu: GeForce RTX 3060
+  ram_gb: 8
+client_8:
+  cpu: Ryzen 7 5825U
+  gpu: GeForce RTX 4060 Mobile
+  ram_gb: 16
+client_9:
   cpu: Processor N150
-  gpu: GeForce GTX 1050 Ti
+  gpu: GeForce RTX 4060 Mobile
   ram_gb: 16
