@@ -3,6 +3,7 @@ import pandas as pd
 import yaml
 
 from bouquetfl.utils.localinfo import get_all_local_info
+from torch.utils.tensorboard import SummaryWriter
 
 # Steam Hardware Survey based sampling for GPUs and CPUs: hardware stats for Windows Computers (94.84% of total)
 # Source: https://store.steampowered.com/hwsurvey/processormfg/   (October 2025)
@@ -11,37 +12,28 @@ from bouquetfl.utils.localinfo import get_all_local_info
 # This ensures that the sampled hardware can be realistically simulated on the physical machine
 
 
-try:
-    with open("config/local_hardware.yaml", "r") as stats_file:
-        hardware_stats = yaml.safe_load(stats_file)
-    gpu_mem, gpu_clock, gpu_mem_speed, gpu_cores = (
-        hardware_stats.get("gpu_memory", None),
-        hardware_stats.get("gpu_clock_speed", None),
-        hardware_stats.get("gpu_memory_speed", None),
-        hardware_stats.get("gpu_cores", None),
-    )
-    cpu_cores, cpu_clock = hardware_stats.get("cpu_cores", None), hardware_stats.get(
-        "cpu_clock_speed", None
-    )
-    ram = hardware_stats.get("ram_gb", None)
-except FileNotFoundError:
-    local_info = get_all_local_info()
-    with open("config/local_hardware.yaml", "w") as stats_file:
-        yaml.dump(local_info, stats_file)
-    gpu_mem, gpu_clock, gpu_mem_speed, gpu_cores = (
-        local_info.get("gpu_memory", None),
-        local_info.get("gpu_clock_speed", None),
-        local_info.get("gpu_memory_speed", None),
-        local_info.get("gpu_cores", None),
-    )
-    cpu_cores, cpu_clock = local_info.get("cpu_cores", None), local_info.get(
-        "cpu_clock_speed", None
-    )
-    ram = local_info.get("ram_gb", None)
+local_info = get_all_local_info()
+with open("config/local_hardware.yaml", "w") as stats_file:
+    yaml.dump(local_info, stats_file)
+gpu_mem, gpu_clock, gpu_mem_speed, gpu_cores = (
+    local_info.get("gpu_memory", None),
+    local_info.get("gpu_clock_speed", None),
+    local_info.get("gpu_memory_speed", None),
+    local_info.get("gpu_cores", None),
+)
+cpu_cores, cpu_clock = local_info.get("cpu_cores", None), local_info.get(
+    "cpu_clock_speed", None
+)
+ram = local_info.get("ram_gb", None)
 print(
-    f"Local hardware capabilities: GPU cores={gpu_cores}, GPU clock={gpu_clock} MHz, GPU memory={gpu_mem} GB, GPU memory speed={gpu_mem_speed} MHz, CPU cores={cpu_cores}, CPU clock={cpu_clock} GHz, RAM={ram} GB"
+    f"Local hardware capabilities: GPU cores={gpu_cores}, GPU clock={gpu_clock} MHz, GPU memory={gpu_mem} GB, GPU memory speed={gpu_mem_speed} MHz, CPU cores={cpu_cores}, CPU clock={cpu_clock} GHz, RAM={ram} GB, OS={local_info.get('os', 'Unknown')}"
 )
 
+log_dir = "logs/bouquetrun"
+writer = SummaryWriter(log_dir=log_dir)
+writer.add_text("local_info/os", local_info.get("os", "Unknown"), 0)
+writer.add_text("local_info/gpu", str(local_info.get("gpu_name", "Unknown")), 0)
+writer.add_text("local_info/cpu", str(local_info.get("cpu_cores", "Unknown")), 0)
 
 def _generate_gpu_sample() -> list[str]:
     gpu_df = pd.read_csv("hardwareconf/gpus.csv")

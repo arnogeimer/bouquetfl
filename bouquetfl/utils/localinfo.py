@@ -2,7 +2,8 @@ import subprocess
 
 import psutil
 from numba import cuda
-
+from torch.utils.tensorboard import SummaryWriter
+import platform
 
 def _get_local_gpu_cores():
 
@@ -63,6 +64,8 @@ def _get_local_ram_info() -> int:
     available_ram_gb = int(ram.available / (1024**3))
     return {"ram_gb": available_ram_gb}
 
+def _get_local_os_info():
+    return {"os": platform.freedesktop_os_release()['NAME'] + " " + platform.freedesktop_os_release()['VERSION_ID']}
 
 def get_all_local_info():
-    return {**_get_local_gpu_info(), **_get_local_cpu_info(), **_get_local_ram_info()}
+    return {**_get_local_gpu_info(), **_get_local_cpu_info(), **_get_local_ram_info(), **_get_local_os_info()}

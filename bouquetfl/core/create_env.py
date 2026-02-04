@@ -13,6 +13,9 @@ from bouquetfl.utils.filesystem import (load_client_hardware_config,
 import json
 import subprocess
 import tempfile
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter("logs/bouquetrun")
 
 def _create_cuda_restricted_env(gpu_name: str):
     gpu_info = pct.get_gpu_info(gpu_name)
@@ -51,7 +54,20 @@ def run_training_process_in_env(client_id: int = None, ins: FitIns = None) -> tu
         f"/tmp/global_params_round_{ins.config['server_round']}.npz",
     )
 
-    gpu, _, ram = load_client_hardware_config(client_id)
+    gpu, cpu, ram = load_client_hardware_config(client_id)
+
+    client_i = {
+    "gpu_name": gpu,
+    "cpu_name": cpu,
+    "ram_gb": ram,
+}
+    step = 0
+
+    writer.add_text(
+        f"clients/{client_id}/info_json",
+        "```json\n" + json.dumps(client_i, indent=2) + "\n```",
+        step,
+    )
 
     env = _create_cuda_restricted_env(gpu)
     _start_mps()

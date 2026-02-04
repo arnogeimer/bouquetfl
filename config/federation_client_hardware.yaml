@@ -1,9 +1,20 @@
 client_0:
-  cpu: Ryzen 3 3100
-  gpu: GeForce 210
+  cpu: Ryzen 5 PRO 4650U
+  gpu: GeForce RTX 4050 Mobile
   ram_gb: 16
-
 client_1:
-  cpu: Ryzen 3 3100
-  gpu: GeForce RTX 3080
-  ram_gb: 32
+  cpu: Ryzen 7 5700U
+  gpu: GeForce RTX 3060
+  ram_gb: 16
+client_2:
+  cpu: Processor N100
+  gpu: GeForce GTX 1070
+  ram_gb: 16
+client_3:
+  cpu: Ryzen 7 5700U
+  gpu: GeForce RTX 3060
+  ram_gb: 16
+client_4:
+  cpu: Processor N150
+  gpu: GeForce GTX 1050 Ti
+  ram_gb: 16

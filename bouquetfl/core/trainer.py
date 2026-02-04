@@ -10,6 +10,8 @@ import pandas as pd
 import pyarrow as pa
 import torch
 from flwr.common.parameter import parameters_to_ndarrays
+from torch.utils.tensorboard import SummaryWriter
+
 
 from bouquetfl.utils import power_clock_tools as pct
 from bouquetfl.utils.filesystem import (load_client_hardware_config,
@@ -59,7 +61,7 @@ from task import cifar100 as mltask
 
 def train_model():
     client_id = args.client_id
-    gpu, cpu, _ = load_client_hardware_config(client_id)
+    gpu, cpu, ram = load_client_hardware_config(client_id)
     # Load model and apply global parameters
     model = mltask.get_model()
     try:
@@ -86,6 +88,8 @@ def train_model():
     # Train model (on GPU)
     start_train_time = timeit.default_timer()
     mltask.ndarrays_to_model(model, ndarrays_original)
+    
+    writer = SummaryWriter(f"logs/clients_train_times/{gpu} {cpu} {ram}GB")
     try:
         mltask.train(
             model=model,
@@ -100,6 +104,8 @@ def train_model():
             mltask.ndarrays_from_model(model),
             f"/tmp/params_updated_{client_id}.npz",
         )
+        writer.add_scalar(f"train_time (sec)", train_time, cfg["server_round"])
+        writer.flush()
 
     except torch.OutOfMemoryError:
         print(f"Client {client_id} has encountered an out-of-memory error.")
@@ -108,6 +114,8 @@ def train_model():
             [],
             f"/tmp/params_updated_{client_id}.npz",
         )
+        writer.add_scalar(f"train_time (sec)", 1, cfg["server_round"])
+        writer.flush()
 
 
     # Save load and training times
