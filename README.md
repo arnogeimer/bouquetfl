@@ -72,6 +72,14 @@ flwr run .
 
 BouquetFL integrates directly into the standard Flower workflow.
 
+### Running the dashboard
+
+From the project root, run:
+```bash
+uv run tensorboard --logdir ~/runs --host 0.0.0.0 --port 6006
+```
+Connect in your browser to http://127.0.0.1:6006.
+ 
 ### First Run: sudo Password Handling
 
 BouquetFL applies hardware limits using system-level tools such as cpupower and nvidia-smi, which require elevated privileges.
@@ -106,6 +114,7 @@ Clients are executed sequentially due to global hardware settings.
 BouquetFL cannot emulate hardware more powerful than the host machine.
 
 GPU support currently requires NVIDIA hardware.
+
 
 
 
