@@ -3,18 +3,18 @@ import pandas as pd
 import numpy as np
 
 def format_results():
-    with open("checkpoints/load_and_training_times.pkl", "rb") as f:
-        results = pickle.load(f)
-
+    try:
+        with open("checkpoints/load_and_training_times.pkl", "rb") as f:
+            results = pickle.load(f)
+    except FileNotFoundError:
+        return None
     results["total_load_time"] = np.nan
     results["total_train_time"] = np.nan
-
-    results = results[:14]
 
     num_rounds = int(results.shape[1] / 2 - 2)
 
     time_errors = []
-    for client_id in range(14):
+    for client_id in range(results.shape[0]):
         values = []
         for round in range(num_rounds):
             values.append(results[f"train_time_{round+1}"][client_id])
@@ -41,6 +41,9 @@ def format_bar(value, max_value, width=25, fill_char="█"):
 
 def print_timings():
     results = format_results()
+    if results is None:
+        print("No timing results found.")
+        return None
     max_load = max(results["total_load_time"])
     max_train = max(results["total_train_time"])
     max_cpu_name_length = max(results["cpu"].str.len().max() + 2, 0)
@@ -49,11 +52,9 @@ def print_timings():
         load_bar = format_bar(entry["total_load_time"], max_load)
         train_bar = format_bar(entry["total_train_time"], max_train)
         print(
-            f"Client {i_:<2} |   "
+            f"{"\033[32m"}REPORT{"\033[0m"} : Client {i_:<2} |   "
             f"{entry['cpu']:<{max_cpu_name_length}}"
             f"{load_bar} {entry['total_load_time']:6.2f}s ({entry['total_load_time']/max_load*100:5.1f}%) "
             f" |   {entry['gpu']:<{max_gpu_name_length}}"
             f"{train_bar} {entry['total_train_time']:6.2f}s ({entry['total_train_time']/max_train*100:5.1f}%) "
         )
-
-print_timings()

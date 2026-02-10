@@ -68,13 +68,14 @@ def save_load_and_training_times(
     data_load_time: float,
     train_time: float,
     num_rounds: int,
+    num_clients: int,
 ) -> None:
     """Save the data load and training times for a given client and round to a pickle file. Found in trainer.py"""
     try:
         df = pd.read_pickle("checkpoints/load_and_training_times.pkl")
     except FileNotFoundError:
         df = pd.DataFrame(
-            index=range(0, 100),
+            index=range(0, num_clients),
             columns=["gpu", "cpu"]
             + [f"load_time_{i}" for i in range(1, num_rounds + 1)]
             + [f"train_time_{i}" for i in range(1, num_rounds + 1)],

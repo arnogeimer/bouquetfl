@@ -66,7 +66,7 @@ def train_model():
     model = mltask.get_model()
     try:
         state_dict_global = torch.load(
-            f"checkpoints/global_params_round_{cfg['server-round']}.tp",
+            f"/tmp/global_params_round_{cfg['server-round']}.pt",
             weights_only=True,
         )
     except FileNotFoundError:
@@ -119,6 +119,7 @@ def train_model():
         data_load_time=data_load_time,
         train_time=train_time,
         num_rounds=cfg["num-server-rounds"],
+        num_clients = cfg["num-clients"],
     )
 
 

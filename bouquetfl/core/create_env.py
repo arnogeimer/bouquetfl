@@ -27,6 +27,7 @@ def _create_cuda_restricted_env(gpu_name: str):
     if current_cores < target_cores:
         print("Emulating a GPU which has more cores than local is impossible.")
         target_cores = current_cores
+    os.environ["CUDA_MPS_LOG_DIRECTORY"] = "/tmp/nvidia-mps"
     env = os.environ.copy()
     env["CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"] = str(100 * target_cores / current_cores)
     print(
@@ -41,10 +42,17 @@ def _start_mps():
     print("MPS server has started.")
 
 
-def _stop_mps():
-    mps_proc = subprocess.Popen(["echo", "quit", "|", "nvidia-cuda-mps-control"])
-    mps_proc.wait()
-    print("MPS server has exited.")
+def _stop_mps(env):
+    # Send "quit" to the control daemon via stdin (NOT via "|")
+    p = subprocess.run(
+        ["nvidia-cuda-mps-control"],
+        input="quit\n",
+        text=True,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return p.returncode, p.stdout, p.stderr
 
 
 def run_training_process_in_env(msg: Message, context: Context) -> tuple[Status, Parameters]:
@@ -103,7 +111,7 @@ def run_training_process_in_env(msg: Message, context: Context) -> tuple[Status,
 
     # Wait for the subprocess to finish before spawning the next one
     child.wait()
-    _stop_mps()
+    #_stop_mps(env)
     pct.reset_all_limits()
 
     # Get new stored model parameters and return to server

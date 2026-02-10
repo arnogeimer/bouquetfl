@@ -15,6 +15,7 @@ import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
+import time
 
 experiment = "cifar10"
 if experiment == "cifar10":
@@ -53,7 +54,6 @@ def main(grid: Grid, context: Context) -> None:
     )
 
     # Save final model to disk
-    results.print_timings()
 
 def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
     """Evaluate model on central data."""
@@ -72,6 +72,8 @@ def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
     test_loss, test_acc = flower_baseline.test(model, test_dataloader, device)
     writer.add_scalar("global accuracy", test_acc, server_round)
     writer.flush()
+    results.print_timings()
+    time.sleep(0.5)
     # Return the evaluation metrics
     return MetricRecord({"loss": test_loss, "accuracy": test_acc})
 

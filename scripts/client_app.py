@@ -79,7 +79,7 @@ def evaluate(msg: Message, context: Context):
         testloader=testset,
         device="cuda" if torch.cuda.is_available() else "cpu",
     )
-    print(context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
+    print("Client", context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
 
     # Construct and return reply Message
     metrics = {
