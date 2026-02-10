@@ -9,6 +9,7 @@ from flwr.server.strategy import FedAvg
 from torch.utils.tensorboard import SummaryWriter
 
 from bouquetfl.utils.sampler import generate_hardware_config
+from bouquetfl.utils import results
 
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
@@ -52,9 +53,7 @@ def main(grid: Grid, context: Context) -> None:
     )
 
     # Save final model to disk
-    print("\nSaving final model to disk...")
-    state_dict = result.arrays.to_torch_state_dict()
-    torch.save(state_dict, "final_model.pt")
+    results.print_timings()
 
 def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
     """Evaluate model on central data."""

@@ -37,18 +37,20 @@ def train(msg: Message, context: Context):
     state_dict = msg.content["arrays"].to_torch_state_dict()
     torch.save(state_dict, f"/tmp/global_params_round_{msg.content['config']['server-round']}.pt")
 
-    _, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
+    status, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
+    if status.code != Code.OK:
+        print(f"Client {context.node_config['partition-id']} failed to train.")
+    else:
+        testset = flower_baseline.load_global_test_data()
 
-    testset = flower_baseline.load_global_test_data()
-
-    model = flower_baseline.get_model()
-    model.load_state_dict(state_dict_updated)
-    loss, accuracy = flower_baseline.test(
-        model=model,
-        testloader=testset,
-        device="cuda" if torch.cuda.is_available() else "cpu",
-    )
-    print(context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
+        model = flower_baseline.get_model()
+        model.load_state_dict(state_dict_updated)
+        loss, accuracy = flower_baseline.test(
+            model=model,
+            testloader=testset,
+            device="cuda" if torch.cuda.is_available() else "cpu",
+        )
+        print(context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
 
     # Construct and return reply Message
     model_record = ArrayRecord(torch_state_dict = state_dict_updated)

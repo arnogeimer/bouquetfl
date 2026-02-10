@@ -38,17 +38,11 @@ def load_new_client_state_dict(client_id: int) -> tuple[Status, Parameters]:
     try:
         state_dict_new = torch.load(local_save_path, weights_only=True)
         os.remove(local_save_path)
-        if len(state_dict_new) == 0:
-            # If OutOfMemory
-            print(f"Client {client_id} has encountered an out-of-memory error.")
-            status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
-            return status, Parameters(tensor_type="", tensors=[])
-        # Build and return response
         status = Status(code=Code.OK, message="Success")
 
     except FileNotFoundError:
-        status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
         state_dict_new = {}
+        status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
     return status, state_dict_new
 
 

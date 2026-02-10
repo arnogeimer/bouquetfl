@@ -105,12 +105,8 @@ def train_model():
 
     except torch.OutOfMemoryError:
         print(f"Client {client_id} has encountered an out-of-memory error.")
-        train_time = None
-        save_ndarrays(
-            [],
-            f"/tmp/params_updated_{client_id}.tp",
-        )
-        writer.add_scalar(f"train_time (sec)", 100, cfg["server-round"])
+        train_time = -1.
+        writer.add_scalar(f"train_time (sec)", train_time, cfg["server-round"])
         writer.flush()
 
 
