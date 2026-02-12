@@ -36,7 +36,7 @@ def _create_cuda_restricted_env(gpu_name: str):
     return env
 
 
-def _start_mps():
+def start_mps():
     mps_proc = subprocess.Popen(["nvidia-cuda-mps-control", "-d"])
     mps_proc.wait()
     print("MPS server has started.")
@@ -73,7 +73,7 @@ def run_training_process_in_env(msg: Message, context: Context) -> tuple[Status,
     )
 
     env = _create_cuda_restricted_env(gpu)
-    _start_mps()
+    #_start_mps()
 
     # We run trainer.py as a separate process with systemd-run using a set CUDA_MPS_ACTIVE_THREAD_PERCENTAGE.
     # Anything else (CPU throttling, RAM limiting, GPU memory and clock limiting) could be done without a separate process.

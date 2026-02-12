@@ -241,4 +241,3 @@ def reset_all_limits():
     reset_gpu_memory_limit(0)
     reset_gpu_clocks(0)
     reset_gpu_memory_clocks(0)
-    print("Reset memory limit and clock speeds to default")

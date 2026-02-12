@@ -1,5 +1,9 @@
 import os
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import numpy as np
 import pandas as pd
 import yaml
@@ -41,7 +45,7 @@ def load_new_client_state_dict(client_id: int) -> tuple[Status, Parameters]:
         status = Status(code=Code.OK, message="Success")
 
     except FileNotFoundError:
-        state_dict_new = {}
+        state_dict_new = None
         status = Status(code=Code.FIT_NOT_IMPLEMENTED, message="Training failed.")
     return status, state_dict_new
 
@@ -56,7 +60,7 @@ def load_client_hardware_config(client_id: int) -> tuple[str, str, int]:
             ram = client_config[f"client_{client_id}"]["ram_gb"]
     except FileNotFoundError:
         raise ValueError("Client hardware configuration file not found.")
-    print(f"Client {client_id} hardware: GPU={gpu}, CPU={cpu}, RAM={ram}GB")
+    print(f"{"\033[31m"}Client {client_id} hardware{"\033[0m"}: GPU={gpu}, CPU={cpu}, RAM={ram}GB")
     return gpu, cpu, ram
 
 

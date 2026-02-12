@@ -10,12 +10,12 @@ from matplotlib.lines import Line2D
 
 def plot_gpu_average_training_times():
 
-    results = pd.read_pickle("checkpoints/load_and_training_times.pkl")
+    results = pd.read_pickle("checkpoints/load_and_training_times(1).pkl")
     results["total_load_time"] = np.nan
     results["total_train_time"] = np.nan
 
-    results = results[:14]
-
+    results = results[1:14]
+    print(results)
     num_rounds = int(results.shape[1] / 2 - 2)
 
     time_errors = []
@@ -104,6 +104,7 @@ def plot_gpu_average_training_times():
             ]
         ),
     ]
+    
     norm_times = []
     for benchmark in bmarks:
         normalized_times = benchmark / max(benchmark)
@@ -233,11 +234,17 @@ def generate_scatter_plot():
         ])
     )
 
+
     gpu_times = gpu_times / np.mean(gpu_times)
+    benchmark_times = benchmark_times / np.mean(benchmark_times)
+    benchmark_times = np.abs(benchmark_times - max(benchmark_times) - min(benchmark_times))
+    fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
+    benchmark_times = np.array([0.42368393, 0.56852998, 0.69859217, 0.36392305, 0.53809541, 0.57088814,
+    1.03511968, 1.08194785, 1.31486138, 0.82455128, 1.28958587, 1.83388507,
+    2.45633621])
     benchmark_times = np.abs(benchmark_times - max(benchmark_times) - min(benchmark_times))
     benchmark_times = benchmark_times / np.mean(benchmark_times)
-    fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
-
+    print(benchmark_times)
     from matplotlib.ticker import AutoMinorLocator
 
     ax.set_axisbelow(True)
@@ -249,7 +256,7 @@ def generate_scatter_plot():
     ax.plot([0, 1], [0, 1], color="black", linestyle="-", linewidth=0.8, zorder=1, alpha = .6)
     print(gpus)
     gpu_times = gpu_times[1:] / 2
-    benchmark_times = benchmark_times[1:] / 2
+    benchmark_times = benchmark_times / 2
     print("spearman", spearmanr(gpu_times, benchmark_times))
     print("kendall", kendalltau(gpu_times, benchmark_times))
     ax.scatter(
@@ -266,23 +273,23 @@ def generate_scatter_plot():
             if i == 0:
                 offset = (-10, 5)
             elif i == 2:
-                offset = (-10, 5)
+                offset = (-13, 5)
             elif i == 3:
                 offset = (5, -2.5)
             elif i == 6:
                 offset = (5, -5)
             elif i == 8:
-                offset = (-25, -3)
+                offset = (-28, -10)
             elif i == 9:
-                offset = (-15.5, 4)
+                offset = (5, -2)
             elif i == 12:
-                offset = (-5.5, 4)
+                offset = (-8.5, 4)
             ax.annotate(
                 txt.split()[-1],
                 (gpu_times[i], benchmark_times[i]),
                 xytext=offset,
                 textcoords="offset points",
-                fontsize=8,
+                fontsize=10,
             )
     # plt.title("Spearman correlation = 0.99", fontsize=12)
     plt.xlabel("Bouquet", fontsize=10)
@@ -317,6 +324,10 @@ def generate_line_plot():
     )
     gpu_times = gpu_times[1:]
     bmarks = bmarks[1:]
+    bmarks = max(bmarks) - bmarks + min(bmarks)
+    bmarks = np.array([0.42368393, 0.56852998, 0.69859217, 0.36392305, 0.53809541, 0.57088814,
+        1.03511968, 1.08194785, 1.31486138, 0.82455128, 1.28958587, 1.83388507,
+        2.45633621])
     bmarks = max(bmarks) - bmarks + min(bmarks)
 
     groups = [3, 6, 9, 13]
@@ -391,7 +402,7 @@ def generate_line_plot():
         ax.axhline(y=y, color="gray", linestyle="--", linewidth=0.5, alpha=0.4)
     plt.xlabel(" ", fontsize=10)
 
-    plt.legend(handlelength=0, handletextpad=1, borderpad=0.65, frameon=True)
+    plt.legend(loc="lower left", handlelength=0, handletextpad=1, borderpad=0.65, frameon=True)
     plt.show()
     plt.savefig("plots/line_plot.pdf")
 

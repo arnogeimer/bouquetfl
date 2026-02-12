@@ -38,6 +38,7 @@ dependencies = [
     "pynvml>=12.0.0",
     "pytest>=8.4.1",
     "ray==2.31.0",
+    "scipy>=1.17.0",
     "tensorboard>=2.20.0",
     "tiktoken>=0.11.0",
     "timm>=1.0.19",
@@ -68,7 +69,7 @@ fraction-evaluate = 1
 local-epochs = 1
 experiment = "cifar10"
 model = "resnet18"              # model architecture or LLM, optional
-batch-size = 128                 # training batch size
+batch-size = 16   # 2048              # training batch size
 learning-rate = 0.01 
 num-clients = 5
 

@@ -10,12 +10,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 from bouquetfl.utils.sampler import generate_hardware_config
 from bouquetfl.utils import results
-
+from bouquetfl.core.create_env import start_mps
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 import time
+
 
 experiment = "cifar10"
 if experiment == "cifar10":
@@ -34,6 +35,8 @@ def main(grid: Grid, context: Context) -> None:
     fraction_evaluate: float = context.run_config["fraction-evaluate"]
     num_rounds: int = context.run_config["num-server-rounds"]
     lr: float = context.run_config["learning-rate"]
+
+    start_mps()
 
     # Generate hardware profiles for clients
     if not os.path.exists("./config/federation_client_hardware.yaml"):

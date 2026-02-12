@@ -1,6 +1,10 @@
-# Some general parameters we need
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import sys
 from typing import List, OrderedDict, Tuple
+
 
 import datasets
 import numpy as np

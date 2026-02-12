@@ -104,8 +104,12 @@ def train_model():
         writer.flush()
 
     except torch.OutOfMemoryError:
-        print(f"Client {client_id} has encountered an out-of-memory error.")
+        #print(f"Client {client_id} has encountered an out-of-memory error.")
         train_time = -1.
+        try:
+            os.remove(f"/tmp/params_updated_{client_id}.tp")
+        except FileNotFoundError:
+            pass
         writer.add_scalar(f"train_time (sec)", train_time, cfg["server-round"])
         writer.flush()
 

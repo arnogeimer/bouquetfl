@@ -1,5 +1,10 @@
 """bouquetfl: A Flower / PyTorch app."""
 
+import time
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import logging
 from flwr.app import Message
 
@@ -39,8 +44,8 @@ def train(msg: Message, context: Context):
 
     status, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
     if status.code != Code.OK:
-        print(f"Client {context.node_config['partition-id']} failed to train.")
-    else:
+        raise torch.OutOfMemoryError(f"{"\033[31m"}Client {context.node_config['partition-id']} has encountered an out-of-memory error{"\033[0m"}")
+    '''else:
         testset = flower_baseline.load_global_test_data()
 
         model = flower_baseline.get_model()
@@ -50,8 +55,8 @@ def train(msg: Message, context: Context):
             testloader=testset,
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
-        print(context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
-
+        print(f"{"\033[32m"}Client {context.node_config['partition-id']} evaluation{"\033[0m"}: accuracy: {round(100 * accuracy, 2)}%, loss: {round(loss, 2)}")
+    '''
     # Construct and return reply Message
     model_record = ArrayRecord(torch_state_dict = state_dict_updated)
     metrics = {
@@ -66,20 +71,18 @@ def evaluate(msg: Message, context: Context):
     """Evaluate the model on local test data."""
 
     state_dict = msg.content["arrays"].to_torch_state_dict()
-    torch.save(state_dict, f"/tmp/global_params_round_{msg.content['config']['server-round']}.pt")
-
-    _, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
 
     testset = flower_baseline.load_data(partition_id=context.node_config["partition-id"], num_clients = context.run_config["num-clients"], num_workers=4, batch_size=context.run_config["batch-size"])
 
     model = flower_baseline.get_model()
-    model.load_state_dict(state_dict_updated)
+    model.load_state_dict(state_dict)
     loss, accuracy = flower_baseline.test(
         model=model,
         testloader=testset,
         device="cuda" if torch.cuda.is_available() else "cpu",
     )
-    print("Client", context.node_config["partition-id"], "evaluation accuracy: ", accuracy, "loss: ", loss)
+    print(f"{"\033[32m"}Global model evaluation on test set {context.node_config['partition-id']}{"\033[0m"}: accuracy: {round(100 * accuracy, 2)}%, loss: {round(loss, 2)}")
+    time.sleep(0.5)
 
     # Construct and return reply Message
     metrics = {
