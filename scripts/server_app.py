@@ -9,7 +9,6 @@ from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.common import Context
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
-from torch.utils.tensorboard import SummaryWriter
 
 from bouquetfl.utils.sampler import generate_hardware_config
 from bouquetfl.utils.localinfo import get_all_local_info
@@ -71,10 +70,6 @@ def global_evaluate(server_round: int, arrays: ArrayRecord, flower_baseline) -> 
         model, flower_baseline.load_global_test_data(), device
     )
 
-    writer = SummaryWriter("logs/evaluate")
-    writer.add_scalar("global/accuracy", test_acc, server_round)
-    writer.add_scalar("global/loss",     test_loss, server_round)
-    writer.flush()
 
     print(
         f"[server] round {server_round} — "
