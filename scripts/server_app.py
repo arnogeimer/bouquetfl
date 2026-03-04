@@ -1,82 +1,83 @@
 """bouquetfl: A Flower / PyTorch app."""
 
+import json
 import os
 
+import torch
+import yaml
+from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.common import Context
-from flwr.common.parameter import parameters_to_ndarrays
-from flwr.server import ServerApp, ServerAppComponents, ServerConfig
-from flwr.server.strategy import FedAvg
+from flwr.serverapp import Grid, ServerApp
+from flwr.serverapp.strategy import FedAvg
 from torch.utils.tensorboard import SummaryWriter
 
 from bouquetfl.utils.sampler import generate_hardware_config
-from bouquetfl.utils import results
-from bouquetfl.core.create_env import start_mps
-import torch
-from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
-from flwr.serverapp import Grid, ServerApp
-from flwr.serverapp.strategy import FedAvg
-import time
+from bouquetfl.utils.localinfo import get_all_local_info
 
-
-experiment = "cifar10"
-if experiment == "cifar10":
-    from task import cifar10 as flower_baseline
-
-# Create ServerApp
 app = ServerApp()
 
 
 @app.main()
-
 def main(grid: Grid, context: Context) -> None:
     """Main entry point for the ServerApp."""
 
-    # Read run config
-    fraction_evaluate: float = context.run_config["fraction-evaluate"]
-    num_rounds: int = context.run_config["num-server-rounds"]
-    lr: float = context.run_config["learning-rate"]
+    run_config      = context.run_config
+    num_rounds:  int   = run_config["num-server-rounds"]
+    num_clients: int   = run_config["num-clients"]
+    lr:          float = run_config["learning-rate"]
+    experiment:  str   = run_config["experiment"]
 
-    start_mps()
+    if experiment == "cifar10":
+        from task import cifar10 as flower_baseline
+    else:
+        raise ValueError(f"Unknown experiment: {experiment}")
 
-    # Generate hardware profiles for clients
-    if not os.path.exists("./config/federation_client_hardware.yaml"):
-        generate_hardware_config(num_clients=context.run_config["num-clients"])
+    # Profile local hardware once — passed to clients via train_config
+    local_hw = get_all_local_info()
 
-    arrays = ArrayRecord(flower_baseline.get_initial_state_dict())
+    # Generate hardware profiles for all clients if not done yet
+    if not os.path.exists("config/federation_client_hardware.yaml"):
+        generate_hardware_config(num_clients=num_clients)
 
-    # Initialize FedAvg strategy
-    strategy = FedAvg(fraction_evaluate=fraction_evaluate)
+    with open("config/federation_client_hardware.yaml") as f:
+        hardware_config = yaml.safe_load(f)
 
-    # Start strategy, run FedAvg for `num_rounds`
-    result = strategy.start(
+    arrays   = ArrayRecord(flower_baseline.get_initial_state_dict())
+    strategy = FedAvg(fraction_evaluate=run_config["fraction-evaluate"])
+
+    strategy.start(
         grid=grid,
         initial_arrays=arrays,
-        train_config=ConfigRecord({"lr": lr}),
+        train_config=ConfigRecord({
+            "hardware_config": json.dumps(hardware_config),
+            "local_hw":        json.dumps(local_hw),
+            "lr":              lr,
+        }),
         num_rounds=num_rounds,
-        evaluate_fn=global_evaluate,
+        evaluate_fn=lambda server_round, arrays: global_evaluate(
+            server_round, arrays, flower_baseline
+        ),
     )
 
-    # Save final model to disk
+def global_evaluate(server_round: int, arrays: ArrayRecord, flower_baseline) -> MetricRecord:
+    """Evaluate global model on central test data."""
 
-def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
-    """Evaluate model on central data."""
-
-    writer = SummaryWriter(f"logs/evaluate")
-    # Load the model and initialize it with the received weights
     model = flower_baseline.get_model()
     model.load_state_dict(arrays.to_torch_state_dict())
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    # Load entire test set
-    test_dataloader = flower_baseline.load_global_test_data()
+    test_loss, test_acc = flower_baseline.test(
+        model, flower_baseline.load_global_test_data(), device
+    )
 
-    # Evaluate the global model on the test set
-    test_loss, test_acc = flower_baseline.test(model, test_dataloader, device)
-    writer.add_scalar("global accuracy", test_acc, server_round)
+    writer = SummaryWriter("logs/evaluate")
+    writer.add_scalar("global/accuracy", test_acc, server_round)
+    writer.add_scalar("global/loss",     test_loss, server_round)
     writer.flush()
-    results.print_timings()
-    time.sleep(0.5)
-    # Return the evaluation metrics
-    return MetricRecord({"loss": test_loss, "accuracy": test_acc})
 
+    print(
+        f"[server] round {server_round} — "
+        f"accuracy: {round(100 * test_acc, 2)}%  loss: {round(test_loss, 4)}"
+    )
+    return MetricRecord({"loss": test_loss, "accuracy": test_acc})

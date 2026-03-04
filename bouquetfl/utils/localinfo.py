@@ -1,9 +1,8 @@
 import subprocess
 
+import platform
 import psutil
 from numba import cuda
-from torch.utils.tensorboard import SummaryWriter
-import platform
 
 def _get_local_gpu_cores():
 

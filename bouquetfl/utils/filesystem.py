@@ -5,10 +5,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 import numpy as np
-import pandas as pd
 import yaml
-from flwr.common import Code, Status, ndarrays_to_parameters
-from flwr.common.typing import Parameters, FitRes
+from flwr.common import Code, Status
+from flwr.common.typing import Parameters
 import torch
 
 def delete_unused_files():
@@ -64,28 +63,3 @@ def load_client_hardware_config(client_id: int) -> tuple[str, str, int]:
     return gpu, cpu, ram
 
 
-def save_load_and_training_times(
-    client_id: int,
-    round: int,
-    gpu: str,
-    cpu: str,
-    data_load_time: float,
-    train_time: float,
-    num_rounds: int,
-    num_clients: int,
-) -> None:
-    """Save the data load and training times for a given client and round to a pickle file. Found in trainer.py"""
-    try:
-        df = pd.read_pickle("checkpoints/load_and_training_times.pkl")
-    except FileNotFoundError:
-        df = pd.DataFrame(
-            index=range(0, num_clients),
-            columns=["gpu", "cpu"]
-            + [f"load_time_{i}" for i in range(1, num_rounds + 1)]
-            + [f"train_time_{i}" for i in range(1, num_rounds + 1)],
-        )
-    df.at[client_id, "gpu"] = gpu
-    df.at[client_id, "cpu"] = cpu
-    df.at[client_id, f"load_time_{round}"] = data_load_time
-    df.at[client_id, f"train_time_{round}"] = train_time
-    df.to_pickle("checkpoints/load_and_training_times.pkl")

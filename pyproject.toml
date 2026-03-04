@@ -63,13 +63,13 @@ clientapp = "scripts.client_app:app"
 
 # Custom config values accessible via `context.run_config`
 [tool.flwr.app.config]
-num-server-rounds = 5
+num-server-rounds = 3
 fraction-fit = 1
 fraction-evaluate = 1
 local-epochs = 1
 experiment = "cifar10"
 model = "resnet18"              # model architecture or LLM, optional
-batch-size = 16   # 2048              # training batch size
+batch-size = 2048                # training batch size
 learning-rate = 0.01 
 num-clients = 5
 

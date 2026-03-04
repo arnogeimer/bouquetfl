@@ -253,7 +253,7 @@ def generate_scatter_plot():
     # And a corresponding grid
     ax.grid(which="major", color="#CCCCCC", linestyle="--")
     #ax.grid(which="minor", color="#CCCCCC", linestyle=":")
-    ax.plot([0, 1], [0, 1], color="black", linestyle="-", linewidth=0.8, zorder=1, alpha = .6)
+    ax.plot([0, 1], [0, 1], color="black", linestyle="-", linewidth=0.8, zorder=1, alpha = .4)
     print(gpus)
     gpu_times = gpu_times[1:] / 2
     benchmark_times = benchmark_times / 2
@@ -292,8 +292,8 @@ def generate_scatter_plot():
                 fontsize=10,
             )
     # plt.title("Spearman correlation = 0.99", fontsize=12)
-    plt.xlabel("Bouquet", fontsize=10)
-    plt.ylabel("Benchmark", fontsize=10)
+    plt.xlabel("Bouquet", fontsize=12)
+    plt.ylabel("Benchmark", fontsize=12)
 
     plt.show()
     plt.savefig("plots/scatters.pdf")
@@ -338,7 +338,9 @@ def generate_line_plot():
         "my_cmap", ["#76b900", "black"]  # start → end
     )
 
-    fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
+    fig, ax = plt.subplots(1, 4, figsize=(4, 4), constrained_layout=True)
+    labels = ["GTX 10xx", "GTX 16xx", "RTX 20xx", "RTX 30xx"]
+
     for i, generation in enumerate(groups):
         current_gpus = gpu_times[start:generation]
         current_bmarks = bmarks[start:generation]
@@ -347,9 +349,13 @@ def generate_line_plot():
         maximum = max(max(current_bmarks), max(current_gpus))
         current_gpus = current_gpus + 1 - maximum
         current_bmarks = current_bmarks + 1 - maximum
-        if i == 2:
-            ax.plot(
-                np.linspace(start + i, generation + i, generation - start),
+        ax[i].set_ylim(0.3, 1.05)
+        ax[i].set_xlabel(labels[i], fontsize=10)
+        ax[i].set_xticks([])
+        if i > 0:
+            ax[i].set_yticks([])
+        if i == 3:
+            ax[i].plot(
                 current_gpus,
                 marker="o",
                 markerfacecolor="none",
@@ -359,8 +365,7 @@ def generate_line_plot():
                 linestyle="--",
                 label="Bouquet",
             )
-            ax.plot(
-                np.linspace(start + i, generation + i, generation - start),
+            ax[i].plot(
                 current_bmarks,
                 marker="s",
                 markerfacecolor="none",
@@ -371,8 +376,7 @@ def generate_line_plot():
                 label="Benchmark",
             )
         else:
-            ax.plot(
-                np.linspace(start + i, generation + i, generation - start),
+            ax[i].plot(
                 current_gpus,
                 marker="o",
                 markerfacecolor="none",
@@ -381,8 +385,7 @@ def generate_line_plot():
                 color=cmap((i / 3) ** 1.5),
                 linestyle="--",
             )
-            ax.plot(
-                np.linspace(start + i, generation + i, generation - start),
+            ax[i].plot(
                 current_bmarks,
                 marker="s",
                 markerfacecolor="none",
@@ -392,17 +395,14 @@ def generate_line_plot():
                 linestyle="--",
             )
 
-        ax.axvline(x=start + i, color="black", linestyle="--", linewidth=0.5, alpha=0.4)
         start = generation
 
-    ax.set_xticks([0, 4, 8, 13])
-    ax.set_xticklabels(["GTX 10xx", "GTX 16xx", "RTX 20xx", "RTX 30xx"], ha="left")
+        for y in [0.4, 0.6, 0.8]:
+            ax[i].axhline(y=y, color="gray", linestyle="--", linewidth=0.5, alpha=0.4)
 
-    for y in [0.4, 0.6, 0.8]:
-        ax.axhline(y=y, color="gray", linestyle="--", linewidth=0.5, alpha=0.4)
-    plt.xlabel(" ", fontsize=10)
-
-    plt.legend(loc="lower left", handlelength=0, handletextpad=1, borderpad=0.65, frameon=True)
+    #plt.xlabel(" ", fontsize=10)
+    plt.subplots_adjust(wspace=0.05)
+    ax[3].legend(loc="lower left", handlelength=0, handletextpad=1, borderpad=0.65, frameon=True)
     plt.show()
     plt.savefig("plots/line_plot.pdf")
 

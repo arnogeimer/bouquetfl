@@ -1,95 +1,138 @@
 """bouquetfl: A Flower / PyTorch app."""
 
-import time
+import json
+import os
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 import logging
-from flwr.app import Message
-
-from flwr.client import Client, ClientApp
-
-from flwr.common import (Code, Context, EvaluateIns, EvaluateRes, FitIns,
-                         FitRes, Status, parameters_to_ndarrays)
-
-from bouquetfl.core.create_env import run_training_process_in_env
-from bouquetfl.utils import power_clock_tools as pct
-from bouquetfl.utils.filesystem import save_ndarrays
-
+import torch
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
+from flwr.common import Context
+
+from bouquetfl.core.emulation_engine import run_emulation
+
 logger = logging.getLogger(__name__)
-
-import torch
-from task import cifar10 as flower_baseline
-
-#####################################
-########## Flower Client ############
-#####################################
-
-# Flower ClientApp
 app = ClientApp()
 
+# Accumulates per-client timing across rounds (persists for the lifetime of
+# the Ray actor, i.e. across all rounds for the same client).
+_timing_history: dict[int, list[dict]] = {}
 
-# Define Flower Client and client_fn
 
 @app.train()
-
 def train(msg: Message, context: Context):
-    """Train the model on local data."""
+    """Run one local training round inside a hardware-restricted emulation."""
 
-    state_dict = msg.content["arrays"].to_torch_state_dict()
-    torch.save(state_dict, f"/tmp/global_params_round_{msg.content['config']['server-round']}.pt")
+    client_id  = context.node_config["partition-id"]
+    run_config = context.run_config
 
-    status, state_dict_updated = run_training_process_in_env(msg=msg, context=context)
-    if status.code != Code.OK:
-        raise torch.OutOfMemoryError(f"{"\033[31m"}Client {context.node_config['partition-id']} has encountered an out-of-memory error{"\033[0m"}")
-    '''else:
-        testset = flower_baseline.load_global_test_data()
+    # Save incoming global params to /tmp for the worker
+    state_dict        = msg.content["arrays"].to_torch_state_dict()
+    input_params_path = f"/tmp/global_params_{client_id}.pt"
+    torch.save(state_dict, input_params_path)
 
-        model = flower_baseline.get_model()
-        model.load_state_dict(state_dict_updated)
-        loss, accuracy = flower_baseline.test(
-            model=model,
-            testloader=testset,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
-        print(f"{"\033[32m"}Client {context.node_config['partition-id']} evaluation{"\033[0m"}: accuracy: {round(100 * accuracy, 2)}%, loss: {round(loss, 2)}")
-    '''
-    # Construct and return reply Message
-    model_record = ArrayRecord(torch_state_dict = state_dict_updated)
-    metrics = {
-        "num-examples": 1,
+    # Hardware profile for this client and local machine info, sent by server
+    hardware_config  = json.loads(msg.content["config"]["hardware_config"])
+    hardware_profile = hardware_config[f"client_{client_id}"]
+    local_hw         = json.loads(msg.content["config"]["local_hw"])
+
+    config = {
+        "task":              f"task/{run_config['experiment']}.py",
+        "client_id":         client_id,
+        "num-clients":       run_config["num-clients"],
+        "batch-size":        run_config["batch-size"],
+        "local-epochs":      run_config["local-epochs"],
+        "learning-rate":     run_config["learning-rate"],
+        "server-round":      msg.content["config"]["server-round"],
+        "num-server-rounds": run_config["num-server-rounds"],
     }
-    metric_record = MetricRecord(metrics)
-    content = RecordDict({"arrays": model_record, "metrics": metric_record})
+
+    timing, state_dict_updated = run_emulation(
+        config=config,
+        hardware_profile=hardware_profile,
+        local_hw=local_hw,
+        input_params_path=input_params_path,
+        output_params=True,
+    )
+
+    os.remove(input_params_path)
+
+    # On OOM the worker produces no parameters. We deliberately send back
+    # the unmodified global model (received at the start of this round) so
+    # FedAvg can still aggregate across all clients. num_examples is reported
+    # as 0, it does not affect aggregation. Timing is still reported with oom=1.
+    if state_dict_updated is None:
+        state_dict_updated = state_dict
+
+    num_examples = timing["num_examples"] if timing else 0
+    server_round = msg.content["config"]["server-round"]
+
+    # Accumulate timing and print per-client running average
+    entry = _timing_history.setdefault(client_id, [])
+    if timing:
+        entry.append(timing)
+    n         = len(entry)
+    avg_load  = sum(t["data_load_time"] for t in entry) / n if n else 0.0
+    avg_train = sum(t["train_time"]     for t in entry if not t.get("oom")) / max(1, sum(1 for t in entry if not t.get("oom")))
+    oom_count = sum(1 for t in entry if t.get("oom"))
+    print(
+        f"[client {client_id}] round {server_round} — "
+        f"load: {timing['data_load_time']:.2f}s  train: {timing['train_time']:.2f}s  "
+        f"{'OOM  ' if timing.get('oom') else 'OK   '}"
+        f"| avg over {n} round(s): load={avg_load:.2f}s  train={avg_train:.2f}s  oom={oom_count}/{n}"
+        if timing else f"[client {client_id}] round {server_round} — no timing data"
+    )
+
+    metrics = {
+        "data_load_time": timing["data_load_time"] if timing else -1.0,
+        "train_time":     timing["train_time"]     if timing else -1.0,
+        "oom":            int(timing.get("oom", False)) if timing else 1,
+        "num-examples":   float(num_examples),
+    }
+
+    content = RecordDict({
+        "arrays":  ArrayRecord(torch_state_dict=state_dict_updated),
+        "metrics": MetricRecord(metrics),
+    })
     return Message(content=content, reply_to=msg)
+
 
 @app.evaluate()
 def evaluate(msg: Message, context: Context):
-    """Evaluate the model on local test data."""
+    """Evaluate the global model on this client's local test partition."""
+
+    client_id  = context.node_config["partition-id"]
+    run_config = context.run_config
+    experiment = run_config["experiment"]
+
+    import importlib
+    mltask = importlib.import_module(f"task.{experiment}")
 
     state_dict = msg.content["arrays"].to_torch_state_dict()
-
-    testset = flower_baseline.load_data(partition_id=context.node_config["partition-id"], num_clients = context.run_config["num-clients"], num_workers=4, batch_size=context.run_config["batch-size"])
-
-    model = flower_baseline.get_model()
+    model      = mltask.get_model()
     model.load_state_dict(state_dict)
-    loss, accuracy = flower_baseline.test(
-        model=model,
-        testloader=testset,
-        device="cuda" if torch.cuda.is_available() else "cpu",
-    )
-    print(f"{"\033[32m"}Global model evaluation on test set {context.node_config['partition-id']}{"\033[0m"}: accuracy: {round(100 * accuracy, 2)}%, loss: {round(loss, 2)}")
-    time.sleep(0.5)
 
-    # Construct and return reply Message
-    metrics = {
-        "loss": loss,
-        "accuracy": accuracy,
+    testloader = mltask.load_data(
+        client_id,
+        num_clients=run_config["num-clients"],
+        num_workers=4,
+        batch_size=run_config["batch-size"],
+    )
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    loss, accuracy = mltask.test(model, testloader, device)
+
+    print(
+        f"[client {client_id}] eval — "
+        f"accuracy: {round(100 * accuracy, 2)}%  loss: {round(loss, 4)}"
+    )
+
+    content = RecordDict({"metrics": MetricRecord({
+        "loss":         loss,
+        "accuracy":     accuracy,
         "num-examples": 1,
-    }
-    metric_record = MetricRecord(metrics)
-    content = RecordDict({"metrics": metric_record})
+    })})
     return Message(content=content, reply_to=msg)
