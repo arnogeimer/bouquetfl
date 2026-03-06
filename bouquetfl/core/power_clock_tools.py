@@ -1,7 +1,7 @@
 import subprocess
+import tomllib
 
 import keyring
-import pandas as pd
 from keyrings.alt.file import PlaintextKeyring
 
 keyring.set_keyring(PlaintextKeyring())
@@ -67,51 +67,56 @@ def reset_gpu_memory_clocks(gpu_index: int) -> None:
 # GPU — hardware info
 # ---------------------------------------------------------------------------
 
+def _load_gpus() -> list[dict]:
+    with open("hardwareconf/gpus.toml", "rb") as f:
+        return tomllib.load(f)["gpus"]
+
+
 def get_gpu_info(gpu_name: str) -> dict:
-    df  = pd.read_csv("hardwareconf/gpus.csv")
-    row = df[df["gpu name"] == gpu_name]
-    if row.empty:
-        raise ValueError(f"GPU '{gpu_name}' not found in database.")
-    r = row.iloc[0]
-    return {
-        "name":             r["gpu name"],
-        "memory":           float(r["Memory (GB)"]),
-        "memory type":      r["Memory type"],
-        "memory bandwidth": float(r["Memory bandwidth"]),
-        "clock speed":      float(r["Clock speed"]),
-        "memory speed":     float(r["Memory Speed"]),
-        "cuda cores":       int(r["CUDA cores"]),
-    }
+    for g in _load_gpus():
+        if g["name"] == gpu_name:
+            return {
+                "name":             g["name"],
+                "memory":           g["memory_gb"],
+                "memory type":      g["memory_type"],
+                "memory bandwidth": g["memory_bw"],
+                "clock speed":      g["clock_speed"],
+                "memory speed":     g["memory_speed"],
+                "cuda cores":       g["cuda_cores"],
+            }
+    raise ValueError(f"GPU '{gpu_name}' not found in database.")
 
 
 # ---------------------------------------------------------------------------
 # CPU — hardware info and limit setter
 # ---------------------------------------------------------------------------
 
+def _load_cpus() -> list[dict]:
+    with open("hardwareconf/cpus.toml", "rb") as f:
+        return tomllib.load(f)["cpus"]
+
+
 def get_cpu_info(cpu_name: str) -> dict:
-    df  = pd.read_csv("hardwareconf/cpus.csv")
-    row = df[df["cpu name"] == cpu_name]
-    if row.empty:
-        raise ValueError(f"CPU '{cpu_name}' not found in database.")
-    r = row.iloc[0]
+    for c in _load_cpus():
+        if c["name"] == cpu_name:
+            # cores field: "2 / 4" (physical / logical) or plain "14" → take first token
+            num_cores = int(str(c["cores"]).split()[0])
 
-    # cores column: "2 / 4" (physical / logical) or plain "14" → take first token
-    num_cores = int(str(r["cores"]).split()[0])
+            # clock field: "2.4 to 3.3 GHz" → extract all numeric tokens
+            clock_values = [
+                float(x) for x in str(c["core_clock"]).split()
+                if x.replace(".", "", 1).isdigit()
+            ]
+            base_clock  = clock_values[0]  * 1000  # GHz → MHz
+            turbo_clock = clock_values[-1] * 1000
 
-    # clock column: "2.4 to 3.3 GHz" → extract all numeric tokens
-    clock_values = [
-        float(x) for x in str(r["core clock"]).split()
-        if x.replace(".", "", 1).isdigit()
-    ]
-    base_clock  = clock_values[0]  * 1000  # GHz → MHz
-    turbo_clock = clock_values[-1] * 1000
-
-    return {
-        "name":        r["cpu name"],
-        "cores":       num_cores,
-        "base clock":  base_clock,
-        "turbo clock": turbo_clock,
-    }
+            return {
+                "name":        c["name"],
+                "cores":       num_cores,
+                "base clock":  base_clock,
+                "turbo clock": turbo_clock,
+            }
+    raise ValueError(f"CPU '{cpu_name}' not found in database.")
 
 
 def set_cpu_limit(cpu_name: str, local_hw: dict) -> int:
