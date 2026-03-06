@@ -1,12 +1,8 @@
+import tomllib
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 import numpy as np
-import pandas as pd
-import yaml
-
-from bouquetfl.utils.localinfo import get_all_local_info
-from torch.utils.tensorboard import SummaryWriter
 
 # Steam Hardware Survey based sampling for GPUs and CPUs: hardware stats for Windows Computers (94.84% of total)
 # Source: https://store.steampowered.com/hwsurvey/processormfg/   (October 2025)
@@ -15,93 +11,89 @@ from torch.utils.tensorboard import SummaryWriter
 # This ensures that the sampled hardware can be realistically simulated on the physical machine
 
 
-local_info = get_all_local_info()
-with open("config/local_hardware.yaml", "w") as stats_file:
-    yaml.dump(local_info, stats_file)
-gpu_mem, gpu_clock, gpu_mem_speed, gpu_cores = (
-    local_info.get("gpu_memory", None),
-    local_info.get("gpu_clock_speed", None),
-    local_info.get("gpu_memory_speed", None),
-    local_info.get("gpu_cores", None),
-)
-cpu_cores, cpu_clock = local_info.get("cpu_cores", None), local_info.get(
-    "cpu_clock_speed", None
-)
-ram = local_info.get("ram_gb", None)
-print(
-    f"Local hardware capabilities: GPU cores={gpu_cores}, GPU clock={gpu_clock} MHz, GPU memory={gpu_mem} GB, GPU memory speed={gpu_mem_speed} MHz, CPU cores={cpu_cores}, CPU clock={cpu_clock} GHz, RAM={ram} GB, OS={local_info.get('os', 'Unknown')}"
-)
+def _load_gpus() -> list[dict]:
+    with open("hardwareconf/gpus.toml", "rb") as f:
+        return tomllib.load(f)["gpus"]
 
-log_dir = "logs/bouquetrun"
-writer = SummaryWriter(log_dir=log_dir)
-writer.add_text("local_info/os", local_info.get("os", "Unknown"), 0)
-writer.add_text("local_info/gpu", str(local_info.get("gpu_name", "Unknown")), 0)
-writer.add_text("local_info/cpu", str(local_info.get("cpu_cores", "Unknown")), 0)
 
-def _generate_gpu_sample() -> list[str]:
-    gpu_df = pd.read_csv("hardwareconf/gpus.csv")
-    probabilities = gpu_df["shss"].astype(float)
+def _load_cpus() -> list[dict]:
+    with open("hardwareconf/cpus.toml", "rb") as f:
+        return tomllib.load(f)["cpus"]
+
+
+def _generate_gpu_sample(local_hw: dict) -> str:
+    gpu_mem       = local_hw.get("gpu_memory", None)
+    gpu_clock     = local_hw.get("gpu_clock_speed", None)
+    gpu_mem_speed = local_hw.get("gpu_memory_speed", None)
+    gpu_cores     = local_hw.get("gpu_cores", None)
+
+    gpus = _load_gpus()
+    names         = [g["name"] for g in gpus]
+    probabilities = np.array([g["shss"] for g in gpus], dtype=float)
     probabilities = probabilities / np.sum(probabilities)
+    gpu_by_name   = {g["name"]: g for g in gpus}
+
     sample_compatible = False
     tries = 0
     while not sample_compatible:
         tries += 1
-        sampled_gpu = np.random.choice(
-            gpu_df["gpu name"], p=probabilities, replace=True
-        )
-        gpu_info = gpu_df[gpu_df["gpu name"] == sampled_gpu].iloc[0]
+        sampled_name = np.random.choice(names, p=probabilities)
+        gpu_info = gpu_by_name[sampled_name]
         if (
-            (gpu_info["CUDA cores"] <= gpu_cores)
-            and (gpu_info["Clock speed"] <= gpu_clock)
-            and (gpu_info["Memory (GB)"] <= gpu_mem)
-            and (gpu_info["Memory Speed"] <= gpu_mem_speed)
+            gpu_info["cuda_cores"]  <= gpu_cores
+            and gpu_info["clock_speed"]  <= gpu_clock
+            and gpu_info["memory_gb"]    <= gpu_mem
+            and gpu_info["memory_speed"] <= gpu_mem_speed
         ):
             sample_compatible = True
         if tries > 50:
             print("Could not find compatible GPU after 50 tries, using fallback GPU.")
-            sampled_gpu = "GeForce GTX 1050"  # Fallback GPU
+            sampled_name = "GeForce GTX 1050"  # Fallback GPU
             sample_compatible = True
-    return sampled_gpu
+    return sampled_name
 
 
-def _generate_cpu_sample() -> list[str]:
-    cpu_df = pd.read_csv("hardwareconf/cpus.csv")
-    probabilities = cpu_df["shss"].astype(float)
+def _generate_cpu_sample(local_hw: dict) -> str:
+    cpu_cores = local_hw.get("cpu_cores", None)
+    cpu_clock = local_hw.get("cpu_clock_speed", None)
+
+    cpus = _load_cpus()
+    names         = [c["name"] for c in cpus]
+    probabilities = np.array([c["shss"] for c in cpus], dtype=float)
     probabilities = probabilities / np.sum(probabilities)
+    cpu_by_name   = {c["name"]: c for c in cpus}
+
     sample_compatible = False
     tries = 0
     while not sample_compatible:
         tries += 1
-        sampled_cpu = np.random.choice(
-            cpu_df["cpu name"], p=probabilities, replace=True
-        )
-        cpu_info = cpu_df[cpu_df["cpu name"] == sampled_cpu].iloc[0]
-        if len(cpu_info["cores"].split(" ")) > 1:
-            num_cores = cpu_info["cores"].split(" ")[0]
-        else:
-            num_cores = cpu_info["cores"]
-        if len(cpu_info["core clock"].split(" ")) > 1:
-            clock_speed = 1000 * float(cpu_info["core clock"].split(" ")[0])
-        else:
-            clock_speed = 1000 * float(cpu_info["core clock"])
-        if int(num_cores) <= cpu_cores and float(clock_speed) <= cpu_clock:
+        sampled_name = np.random.choice(names, p=probabilities)
+        cpu_info = cpu_by_name[sampled_name]
+        # cores field: "2 / 4" (physical / logical) or plain "14"
+        cores_str = cpu_info["cores"].split(" ")[0]
+        # core_clock field: "2.4 to 3.3 GHz" or "3.6 GHz" — take the base value
+        clock_str = cpu_info["core_clock"].split(" ")[0]
+        clock_mhz = 1000 * float(clock_str)
+        if int(cores_str) <= cpu_cores and clock_mhz <= cpu_clock:
             sample_compatible = True
         if tries > 50:
             print("Could not find compatible CPU after 50 tries, using fallback CPU.")
-            sampled_cpu = "Ryzen 3 1200"  # Fallback CPU
+            sampled_name = "Ryzen 3 1200"  # Fallback CPU
             sample_compatible = True
-    return sampled_cpu
+    return sampled_name
 
 
-def _generate_ram_sample() -> int:
+def _generate_ram_sample(local_hw: dict) -> int:
+    ram = local_hw.get("ram_gb", None)
+
     ram_options = [4, 8, 12, 16, 24, 32, 48, 64]
     probabilities = np.array(
         [0.0162, 0.0838, 0.0261, 0.4149, 0.0185, 0.3593, 0.0109, 0.0435]
-    ) # Directly sampled from Steam hardware survey
+    )  # Directly sampled from Steam hardware survey
     probabilities = probabilities / np.sum(probabilities)
-    sample_compatible = False
     if ram <= 4:
-        return ram.tolist()
+        return int(ram)
+    sample_compatible = False
     while not sample_compatible:
         sampled_ram = np.random.choice(ram_options, p=probabilities, replace=True)
         if sampled_ram <= ram:
@@ -109,18 +101,24 @@ def _generate_ram_sample() -> int:
     return sampled_ram.tolist()
 
 
-def generate_hardware_config(num_clients: int) -> None:
+def generate_hardware_config(num_clients: int, local_hw: dict) -> dict:
+    print(
+        f"Local hardware: GPU cores={local_hw.get('gpu_cores')}, "
+        f"GPU clock={local_hw.get('gpu_clock_speed')} MHz, "
+        f"GPU memory={local_hw.get('gpu_memory')} GB, "
+        f"GPU memory speed={local_hw.get('gpu_memory_speed')} MHz, "
+        f"CPU cores={local_hw.get('cpu_cores')}, "
+        f"CPU clock={local_hw.get('cpu_clock_speed')} MHz, "
+        f"RAM={local_hw.get('ram_gb')} GB"
+    )
     client_hardware = {}
     for client_id in range(num_clients):
-        gpu, cpu, ram = (
-            _generate_gpu_sample(),
-            _generate_cpu_sample(),
-            _generate_ram_sample(),
-        )
+        gpu = _generate_gpu_sample(local_hw)
+        cpu = _generate_cpu_sample(local_hw)
+        ram = _generate_ram_sample(local_hw)
         client_hardware[f"client_{client_id}"] = {
             "gpu": gpu,
             "cpu": cpu,
             "ram_gb": ram,
         }
-    with open("./config/federation_client_hardware.yaml", "w") as hardware_file:
-        yaml.dump(client_hardware, hardware_file)
+    return client_hardware

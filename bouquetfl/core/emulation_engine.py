@@ -31,6 +31,8 @@ from bouquetfl.core import power_clock_tools as pct
 MPS_LOG_DIR = "/tmp/nvidia-mps"
 
 def _start_mps() -> None:
+    # Stop any leftover MPS server from a previous crashed run before starting fresh
+    _stop_mps()
     os.makedirs(MPS_LOG_DIR, exist_ok=True)
     env = os.environ.copy()
     env["CUDA_MPS_LOG_DIRECTORY"] = MPS_LOG_DIR

@@ -2,9 +2,9 @@
 
 import json
 import os
+import tomllib
 
 import torch
-import yaml
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.common import Context
 from flwr.serverapp import Grid, ServerApp
@@ -14,6 +14,8 @@ from bouquetfl.utils.sampler import generate_hardware_config
 from bouquetfl.utils.localinfo import get_all_local_info
 
 app = ServerApp()
+
+HARDWARE_CONFIG_PATH = "config/federation_client_hardware.toml"
 
 
 @app.main()
@@ -34,15 +36,25 @@ def main(grid: Grid, context: Context) -> None:
     # Profile local hardware once — passed to clients via train_config
     local_hw = get_all_local_info()
 
-    # Generate hardware profiles for all clients if not done yet
-    if not os.path.exists("config/federation_client_hardware.yaml"):
-        generate_hardware_config(num_clients=num_clients)
+    # Load or generate hardware profiles for all clients
+    if os.path.exists(HARDWARE_CONFIG_PATH):
+        with open(HARDWARE_CONFIG_PATH, "rb") as f:
+            hardware_config = tomllib.load(f)
+        print(f"[server] loaded hardware config from {HARDWARE_CONFIG_PATH}")
+    else:
+        hardware_config = generate_hardware_config(num_clients=num_clients, local_hw=local_hw)
+        print("[server] generated hardware config from local hardware profile")
 
-    with open("config/federation_client_hardware.yaml") as f:
-        hardware_config = yaml.safe_load(f)
+    # Print full federation hardware config for traceability
+    print("[server] federation hardware config:")
+    for client_id, profile in hardware_config.items():
+        print(f"  {client_id}: GPU={profile['gpu']}  CPU={profile['cpu']}  RAM={profile['ram_gb']} GB")
 
     arrays   = ArrayRecord(flower_baseline.get_initial_state_dict())
-    strategy = FedAvg(fraction_evaluate=run_config["fraction-evaluate"])
+    strategy = FedAvg(
+        fraction_train=run_config["fraction-fit"],
+        fraction_evaluate=run_config["fraction-evaluate"],
+    )
 
     strategy.start(
         grid=grid,
@@ -69,7 +81,6 @@ def global_evaluate(server_round: int, arrays: ArrayRecord, flower_baseline) -> 
     test_loss, test_acc = flower_baseline.test(
         model, flower_baseline.load_global_test_data(), device
     )
-
 
     print(
         f"[server] round {server_round} — "
