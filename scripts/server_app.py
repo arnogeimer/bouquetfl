@@ -10,8 +10,9 @@ from flwr.common import Context
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
-from bouquetfl.utils.sampler import generate_hardware_config
-from bouquetfl.utils.localinfo import get_all_local_info
+from bouquetfl.utils.sampler.sampler import generate_hardware_config
+from bouquetfl.utils.hardware.localinfo import get_all_local_info
+from bouquetfl.utils.network.network import get_location_speeds
 
 app = ServerApp()
 
@@ -48,7 +49,20 @@ def main(grid: Grid, context: Context) -> None:
     # Print full federation hardware config for traceability
     print("[server] federation hardware config:")
     for client_id, profile in hardware_config.items():
-        print(f"  {client_id}: GPU={profile['gpu']}  CPU={profile['cpu']}  RAM={profile['ram_gb']} GB")
+        location = profile.get("location", "N/A")
+        speeds   = get_location_speeds(location) if location != "N/A" else {"upload_mbps": 0.0, "download_mbps": 0.0}
+        print(
+            f"  {client_id}: GPU={profile['gpu']}  CPU={profile['cpu']}  RAM={profile['ram_gb']} GB"
+            f"  loc={location}  ↑{speeds['upload_mbps']:.0f} Mbps  ↓{speeds['download_mbps']:.0f} Mbps"
+        )
+
+    # Render world-map visualisation (requires cartopy + matplotlib)
+    try:
+        from bouquetfl.utils.misc.visualize_federation import visualize
+        server_location = run_config.get("server-location", "Germany")
+        visualize(hardware_config, server_location=server_location)
+    except ImportError:
+        print("[server] skipping map visualisation (cartopy / matplotlib not installed)")
 
     arrays   = ArrayRecord(flower_baseline.get_initial_state_dict())
     strategy = FedAvg(
@@ -69,6 +83,7 @@ def main(grid: Grid, context: Context) -> None:
             server_round, arrays, flower_baseline
         ),
     )
+
 
 def global_evaluate(server_round: int, arrays: ArrayRecord, flower_baseline) -> MetricRecord:
     """Evaluate global model on central test data."""

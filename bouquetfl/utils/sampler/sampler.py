@@ -4,6 +4,10 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 import numpy as np
 
+_GPUS_SCHEMA_VERSION      = 1
+_CPUS_SCHEMA_VERSION      = 1
+_LOCATIONS_SCHEMA_VERSION = 1
+
 # Steam Hardware Survey based sampling for GPUs and CPUs: hardware stats for Windows Computers (94.84% of total)
 # Source: https://store.steampowered.com/hwsurvey/processormfg/   (October 2025)
 # To generate samples, we first check the current hardware capabilities of the physical machine
@@ -13,12 +17,20 @@ import numpy as np
 
 def _load_gpus() -> list[dict]:
     with open("hardwareconf/gpus.toml", "rb") as f:
-        return tomllib.load(f)["gpus"]
+        data = tomllib.load(f)
+    v = data.get("schema_version", 0)
+    if v != _GPUS_SCHEMA_VERSION:
+        raise RuntimeError(f"hardwareconf/gpus.toml schema_version={v}, expected {_GPUS_SCHEMA_VERSION}")
+    return data["gpus"]
 
 
 def _load_cpus() -> list[dict]:
     with open("hardwareconf/cpus.toml", "rb") as f:
-        return tomllib.load(f)["cpus"]
+        data = tomllib.load(f)
+    v = data.get("schema_version", 0)
+    if v != _CPUS_SCHEMA_VERSION:
+        raise RuntimeError(f"hardwareconf/cpus.toml schema_version={v}, expected {_CPUS_SCHEMA_VERSION}")
+    return data["cpus"]
 
 
 def _generate_gpu_sample(local_hw: dict) -> str:
@@ -101,6 +113,20 @@ def _generate_ram_sample(local_hw: dict) -> int:
     return sampled_ram.tolist()
 
 
+def _load_locations() -> list[str]:
+    with open("networkconf/locations.toml", "rb") as f:
+        data = tomllib.load(f)
+    v = data.get("schema_version", 0)
+    if v != _LOCATIONS_SCHEMA_VERSION:
+        raise RuntimeError(f"networkconf/locations.toml schema_version={v}, expected {_LOCATIONS_SCHEMA_VERSION}")
+    return [loc["name"] for loc in data["locations"]]
+
+
+def _generate_location_sample() -> str:
+    locations = _load_locations()
+    return np.random.choice(locations)
+
+
 def generate_hardware_config(num_clients: int, local_hw: dict) -> dict:
     print(
         f"Local hardware: GPU cores={local_hw.get('gpu_cores')}, "
@@ -113,12 +139,14 @@ def generate_hardware_config(num_clients: int, local_hw: dict) -> dict:
     )
     client_hardware = {}
     for client_id in range(num_clients):
-        gpu = _generate_gpu_sample(local_hw)
-        cpu = _generate_cpu_sample(local_hw)
-        ram = _generate_ram_sample(local_hw)
+        gpu      = _generate_gpu_sample(local_hw)
+        cpu      = _generate_cpu_sample(local_hw)
+        ram      = _generate_ram_sample(local_hw)
+        location = _generate_location_sample()
         client_hardware[f"client_{client_id}"] = {
-            "gpu": gpu,
-            "cpu": cpu,
-            "ram_gb": ram,
+            "gpu":      gpu,
+            "cpu":      cpu,
+            "ram_gb":   ram,
+            "location": location,
         }
     return client_hardware

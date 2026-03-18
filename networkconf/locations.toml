@@ -1,0 +1,91 @@
+# Network location profiles — upload/download speeds in Mbps
+# Source: placeholder values based on typical country averages (Speedtest Global Index)
+# Country names must match Natural Earth "NAME" field used by cartopy.
+# Add or edit entries to reflect your target federation scenario.
+# schema_version: increment when adding/removing/renaming fields in [[locations]] entries.
+schema_version = 1
+
+[[locations]]
+name           = "United States of America"
+download_mbps  = 200.0
+upload_mbps    = 60.0
+
+[[locations]]
+name           = "Canada"
+download_mbps  = 170.0
+upload_mbps    = 50.0
+
+[[locations]]
+name           = "United Kingdom"
+download_mbps  = 130.0
+upload_mbps    = 60.0
+
+[[locations]]
+name           = "Germany"
+download_mbps  = 120.0
+upload_mbps    = 55.0
+
+[[locations]]
+name           = "France"
+download_mbps  = 130.0
+upload_mbps    = 50.0
+
+[[locations]]
+name           = "Netherlands"
+download_mbps  = 180.0
+upload_mbps    = 80.0
+
+[[locations]]
+name           = "Sweden"
+download_mbps  = 160.0
+upload_mbps    = 70.0
+
+[[locations]]
+name           = "China"
+download_mbps  = 90.0
+upload_mbps    = 40.0
+
+[[locations]]
+name           = "Japan"
+download_mbps  = 170.0
+upload_mbps    = 80.0
+
+[[locations]]
+name           = "South Korea"
+download_mbps  = 200.0
+upload_mbps    = 100.0
+
+[[locations]]
+name           = "India"
+download_mbps  = 50.0
+upload_mbps    = 20.0
+
+[[locations]]
+name           = "Singapore"
+download_mbps  = 250.0
+upload_mbps    = 120.0
+
+[[locations]]
+name           = "Brazil"
+download_mbps  = 70.0
+upload_mbps    = 25.0
+
+[[locations]]
+name           = "Argentina"
+download_mbps  = 60.0
+upload_mbps    = 20.0
+
+[[locations]]
+name           = "South Africa"
+download_mbps  = 40.0
+upload_mbps    = 15.0
+
+[[locations]]
+name           = "Nigeria"
+download_mbps  = 20.0
+upload_mbps    = 10.0
+
+[[locations]]
+name           = "Australia"
+download_mbps  = 110.0
+upload_mbps    = 45.0

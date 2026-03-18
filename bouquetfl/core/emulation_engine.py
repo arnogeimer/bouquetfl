@@ -22,6 +22,7 @@ import os
 import subprocess
 
 from bouquetfl.core import power_clock_tools as pct
+from bouquetfl.utils.network.network import estimate_model_size_mb, estimate_transfer_time, get_location_speeds, get_ping
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +256,26 @@ def run_emulation(
         import torch
         state_dict = torch.load(out_params_path, weights_only=True)
         os.remove(out_params_path)
+
+        # ------------------------------------------------------------------
+        # 14. Estimate upload/download times from model size + location speeds
+        # ------------------------------------------------------------------
+        client_location = hardware_profile.get("location", "Europe")
+        server_location = config.get("server-location", "Germany")
+        model_size_mb   = estimate_model_size_mb(state_dict)
+        client_speeds   = get_location_speeds(client_location)
+        ping_ms         = get_ping(client_location, server_location)
+        upload_time     = estimate_transfer_time(model_size_mb, client_speeds["upload_mbps"],   ping_ms)
+        download_time   = estimate_transfer_time(model_size_mb, client_speeds["download_mbps"], ping_ms)
+        print(
+            f"[engine] model: {model_size_mb:.2f} MB  "
+            f"upload: {upload_time:.2f}s  download: {download_time:.2f}s  "
+            f"(location: {client_location} → {server_location}, ping: {ping_ms:.0f} ms)"
+        )
+        if timing is not None:
+            timing["upload_time"]   = upload_time
+            timing["download_time"] = download_time
+
         return timing, state_dict
 
     print(

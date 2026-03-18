@@ -67,9 +67,17 @@ def reset_gpu_memory_clocks(gpu_index: int) -> None:
 # GPU — hardware info
 # ---------------------------------------------------------------------------
 
+_GPUS_SCHEMA_VERSION  = 1
+_CPUS_SCHEMA_VERSION  = 1
+
+
 def _load_gpus() -> list[dict]:
     with open("hardwareconf/gpus.toml", "rb") as f:
-        return tomllib.load(f)["gpus"]
+        data = tomllib.load(f)
+    v = data.get("schema_version", 0)
+    if v != _GPUS_SCHEMA_VERSION:
+        raise RuntimeError(f"hardwareconf/gpus.toml schema_version={v}, expected {_GPUS_SCHEMA_VERSION}")
+    return data["gpus"]
 
 
 def get_gpu_info(gpu_name: str) -> dict:
@@ -93,7 +101,11 @@ def get_gpu_info(gpu_name: str) -> dict:
 
 def _load_cpus() -> list[dict]:
     with open("hardwareconf/cpus.toml", "rb") as f:
-        return tomllib.load(f)["cpus"]
+        data = tomllib.load(f)
+    v = data.get("schema_version", 0)
+    if v != _CPUS_SCHEMA_VERSION:
+        raise RuntimeError(f"hardwareconf/cpus.toml schema_version={v}, expected {_CPUS_SCHEMA_VERSION}")
+    return data["cpus"]
 
 
 def get_cpu_info(cpu_name: str) -> dict:

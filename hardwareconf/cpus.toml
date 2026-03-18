@@ -1,4 +1,7 @@
 # CPU hardware database — source: Steam Hardware Survey (October 2025)
+# schema_version: increment when adding/removing/renaming fields in [[cpus]] entries.
+# Code that reads this file should check the version and raise a clear error if mismatched.
+schema_version = 1
 
 [[cpus]]
 name        = 'Athlon Gold 3150U'

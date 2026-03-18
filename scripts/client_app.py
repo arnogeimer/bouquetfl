@@ -82,15 +82,18 @@ def train(msg: Message, context: Context):
     print(
         f"[client {client_id}] round {server_round} — "
         f"load: {timing['data_load_time']:.2f}s  train: {timing['train_time']:.2f}s  "
+        f"upload: {timing.get('upload_time', -1.0):.2f}s  download: {timing.get('download_time', -1.0):.2f}s  "
         f"{'OOM  ' if timing.get('oom') else 'OK   '}"
         f"| avg over {n} round(s): load={avg_load:.2f}s  train={avg_train:.2f}s  oom={oom_count}/{n}"
         if timing else f"[client {client_id}] round {server_round} — no timing data"
     )
 
     metrics = {
-        "data_load_time": timing["data_load_time"] if timing else -1.0,
-        "train_time":     timing["train_time"]     if timing else -1.0,
-        "oom":            int(timing.get("oom", False)) if timing else 1,
+        "data_load_time": timing["data_load_time"]          if timing else -1.0,
+        "train_time":     timing["train_time"]              if timing else -1.0,
+        "upload_time":    timing.get("upload_time",   -1.0) if timing else -1.0,
+        "download_time":  timing.get("download_time", -1.0) if timing else -1.0,
+        "oom":            int(timing.get("oom", False))     if timing else 1,
         "num-examples":   float(num_examples),
     }
 
