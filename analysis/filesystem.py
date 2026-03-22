@@ -52,7 +52,7 @@ def load_new_client_state_dict(client_id: int) -> tuple[Status, Parameters]:
 def load_client_hardware_config(client_id: int) -> tuple[str, str, int]:
     """Load the hardware configuration for a given client from YAML file. Found in FlowerClient.fit and trainer.py"""
     try:
-        with open("config/federation_client_hardware.yaml", "r") as f:
+        with open("federation_client_hardware.toml", "rb") as f:
             client_config = yaml.safe_load(f)
             gpu = client_config[f"client_{client_id}"]["gpu"]
             cpu = client_config[f"client_{client_id}"]["cpu"]

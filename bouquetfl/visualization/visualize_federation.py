@@ -107,11 +107,11 @@ _LOCATIONS_SCHEMA_VERSION = 1
 
 
 def _load_location_speeds(location: str) -> dict:
-    with open("networkconf/locations.toml", "rb") as f:
+    with open("datasets/locations.toml", "rb") as f:
         data = tomllib.load(f)
     v = data.get("schema_version", 0)
     if v != _LOCATIONS_SCHEMA_VERSION:
-        raise RuntimeError(f"networkconf/locations.toml schema_version={v}, expected {_LOCATIONS_SCHEMA_VERSION}")
+        raise RuntimeError(f"datasets/locations.toml schema_version={v}, expected {_LOCATIONS_SCHEMA_VERSION}")
     for loc in data["locations"]:
             if loc["name"] == location:
                 return loc

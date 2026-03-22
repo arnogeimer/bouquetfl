@@ -29,7 +29,7 @@ from matplotlib.patches import FancyBboxPatch
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
-from bouquetfl.utils.misc.visualize_federation import (
+from bouquetfl.visualization.visualize_federation import (
     _random_point,
     _great_circle_path,
     _load_location_speeds,
@@ -252,13 +252,14 @@ def _render_frame(clients: list[VisualClient],
     ax.set_title(f"BouquetFL — Round progress  t={t:.1f}s / {t_max:.1f}s",
                  fontsize=14, pad=10)
 
-    ax.legend(handles=[
-        mpatches.Patch(color=_PHASE_COLORS["download"], label="Download"),
-        mpatches.Patch(color=_PHASE_COLORS["load"],     label="Load"),
-        mpatches.Patch(color=_PHASE_COLORS["train"],    label="Train"),
-        mpatches.Patch(color=_PHASE_COLORS["upload"],   label="Upload"),
-        mpatches.Patch(color="red",                     label="Server"),
-    ], loc="lower left", fontsize=8)
+    legend_handles = [
+        mpatches.Patch(facecolor="#3377ee", edgecolor="#3377ee", label="Download"),
+        mpatches.Patch(facecolor="#ee8833", edgecolor="#ee8833", label="Load"),
+        mpatches.Patch(facecolor="#33aa55", edgecolor="#33aa55", label="Train"),
+        mpatches.Patch(facecolor="#222222", edgecolor="#222222", label="Upload"),
+        mpatches.Patch(facecolor="red",     edgecolor="red",    label="Server"),
+    ]
+    ax.legend(handles=legend_handles, loc="lower left", fontsize=8)
 
     plt.tight_layout()
     return fig

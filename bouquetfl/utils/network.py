@@ -24,24 +24,24 @@ def get_location_speeds(location: str) -> dict:
     Parameters
     ----------
     location : str
-        Location name matching an entry in networkconf/locations.toml.
+        Location name matching an entry in datasets/locations.toml.
 
     Returns
     -------
     dict with keys "download_mbps" and "upload_mbps".
     """
-    with open("networkconf/locations.toml", "rb") as f:
+    with open("datasets/locations.toml", "rb") as f:
         data = tomllib.load(f)
     v = data.get("schema_version", 0)
     if v != _LOCATIONS_SCHEMA_VERSION:
-        raise RuntimeError(f"networkconf/locations.toml schema_version={v}, expected {_LOCATIONS_SCHEMA_VERSION}")
+        raise RuntimeError(f"datasets/locations.toml schema_version={v}, expected {_LOCATIONS_SCHEMA_VERSION}")
     for entry in data["locations"]:
         if entry["name"] == location:
             return {
                 "download_mbps": entry["download_mbps"],
                 "upload_mbps":   entry["upload_mbps"],
             }
-    raise ValueError(f"Location '{location}' not found in networkconf/locations.toml.")
+    raise ValueError(f"Location '{location}' not found in datasets/locations.toml.")
 
 
 # ---------------------------------------------------------------------------
@@ -51,29 +51,29 @@ def get_location_speeds(location: str) -> dict:
 def get_ping(location_a: str, location_b: str) -> float:
     """Return round-trip ping (ms) between two locations.
 
-    Looks up the undirected edge (A, B) or (B, A) in networkconf/ping_graph.toml.
+    Looks up the undirected edge (A, B) or (B, A) in datasets/ping_graph.toml.
 
     Parameters
     ----------
     location_a, location_b : str
-        Location names matching entries in networkconf/ping_graph.toml.
+        Location names matching entries in datasets/ping_graph.toml.
 
     Returns
     -------
     float — round-trip latency in milliseconds.
     """
-    with open("networkconf/ping_graph.toml", "rb") as f:
+    with open("datasets/ping_graph.toml", "rb") as f:
         data = tomllib.load(f)
     v = data.get("schema_version", 0)
     if v != _PING_GRAPH_SCHEMA_VERSION:
-        raise RuntimeError(f"networkconf/ping_graph.toml schema_version={v}, expected {_PING_GRAPH_SCHEMA_VERSION}")
+        raise RuntimeError(f"datasets/ping_graph.toml schema_version={v}, expected {_PING_GRAPH_SCHEMA_VERSION}")
     for edge in data["edges"]:
         if (edge["from"] == location_a and edge["to"] == location_b) or \
            (edge["from"] == location_b and edge["to"] == location_a):
             return float(edge["ping_ms"])
     raise ValueError(
         f"No ping entry found for ({location_a}, {location_b}) "
-        "in networkconf/ping_graph.toml."
+        "in datasets/ping_graph.toml."
     )
 
 

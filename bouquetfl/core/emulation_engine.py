@@ -22,7 +22,7 @@ import os
 import subprocess
 
 from bouquetfl.core import power_clock_tools as pct
-from bouquetfl.utils.network.network import estimate_model_size_mb, estimate_transfer_time, get_location_speeds, get_ping
+from bouquetfl.utils.network import estimate_model_size_mb, estimate_transfer_time, get_location_speeds, get_ping
 
 
 # ---------------------------------------------------------------------------

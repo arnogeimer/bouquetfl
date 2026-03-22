@@ -72,11 +72,11 @@ _CPUS_SCHEMA_VERSION  = 1
 
 
 def _load_gpus() -> list[dict]:
-    with open("hardwareconf/gpus.toml", "rb") as f:
+    with open("datasets/gpus.toml", "rb") as f:
         data = tomllib.load(f)
     v = data.get("schema_version", 0)
     if v != _GPUS_SCHEMA_VERSION:
-        raise RuntimeError(f"hardwareconf/gpus.toml schema_version={v}, expected {_GPUS_SCHEMA_VERSION}")
+        raise RuntimeError(f"datasets/gpus.toml schema_version={v}, expected {_GPUS_SCHEMA_VERSION}")
     return data["gpus"]
 
 
@@ -100,11 +100,11 @@ def get_gpu_info(gpu_name: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _load_cpus() -> list[dict]:
-    with open("hardwareconf/cpus.toml", "rb") as f:
+    with open("datasets/cpus.toml", "rb") as f:
         data = tomllib.load(f)
     v = data.get("schema_version", 0)
     if v != _CPUS_SCHEMA_VERSION:
-        raise RuntimeError(f"hardwareconf/cpus.toml schema_version={v}, expected {_CPUS_SCHEMA_VERSION}")
+        raise RuntimeError(f"datasets/cpus.toml schema_version={v}, expected {_CPUS_SCHEMA_VERSION}")
     return data["cpus"]
 
 

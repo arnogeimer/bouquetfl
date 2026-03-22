@@ -10,13 +10,13 @@ from flwr.common import Context
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import FedAvg
 
-from bouquetfl.utils.sampler.sampler import generate_hardware_config
-from bouquetfl.utils.hardware.localinfo import get_all_local_info
-from bouquetfl.utils.network.network import get_location_speeds
+from bouquetfl.utils.sampler import generate_hardware_config
+from bouquetfl.utils.localinfo import get_all_local_info
+from bouquetfl.utils.network import get_location_speeds
 
 app = ServerApp()
 
-HARDWARE_CONFIG_PATH = "config/federation_client_hardware.toml"
+HARDWARE_CONFIG_PATH = "federation_client_hardware.toml"
 
 
 @app.main()
@@ -58,7 +58,7 @@ def main(grid: Grid, context: Context) -> None:
 
     # Render world-map visualisation (requires cartopy + matplotlib)
     try:
-        from bouquetfl.utils.misc.visualize_federation import visualize
+        from bouquetfl.visualization.visualize_federation import visualize
         server_location = run_config.get("server-location", "Germany")
         visualize(hardware_config, server_location=server_location)
     except ImportError:
@@ -67,7 +67,7 @@ def main(grid: Grid, context: Context) -> None:
     # Build GIF aggregation hook (generates a round GIF after each training round)
     train_metrics_aggr_fn = None
     try:
-        from bouquetfl.utils.misc.visualize_gif import make_train_metrics_aggr_fn
+        from bouquetfl.visualization.visualize_gif import make_train_metrics_aggr_fn
         server_location = run_config.get("server-location", "Germany")
         train_metrics_aggr_fn = make_train_metrics_aggr_fn(
             hardware_config, server_location=server_location,
