@@ -5,6 +5,10 @@ It allows researchers to emulate clients with different CPU, GPU, and RAM capabi
 
 BouquetFL is designed for studying realistic cross-device federated learning scenarios where client devices differ widely in computational power without requiring access to large, heterogeneous hardware testbeds. Each simulated client runs sequentially under a configurable hardware profile, enabling controlled and reproducible experimentation.
 
+### Example: a federation round in action
+
+![BouquetFL round visualization](visuals/round_example.gif)
+
 ---
 
 ## System Dependencies

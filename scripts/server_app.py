@@ -64,10 +64,22 @@ def main(grid: Grid, context: Context) -> None:
     except ImportError:
         print("[server] skipping map visualisation (cartopy / matplotlib not installed)")
 
+    # Build GIF aggregation hook (generates a round GIF after each training round)
+    train_metrics_aggr_fn = None
+    try:
+        from bouquetfl.utils.misc.visualize_gif import make_train_metrics_aggr_fn
+        server_location = run_config.get("server-location", "Germany")
+        train_metrics_aggr_fn = make_train_metrics_aggr_fn(
+            hardware_config, server_location=server_location,
+        )
+    except ImportError:
+        print("[server] skipping round GIF (cartopy / matplotlib / Pillow not installed)")
+
     arrays   = ArrayRecord(flower_baseline.get_initial_state_dict())
     strategy = FedAvg(
         fraction_train=run_config["fraction-fit"],
         fraction_evaluate=run_config["fraction-evaluate"],
+        train_metrics_aggr_fn=train_metrics_aggr_fn,
     )
 
     strategy.start(
