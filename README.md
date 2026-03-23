@@ -1,127 +1,86 @@
-# 💐 BouquetFL
+# BouquetFL
 
-**BouquetFL** is a framework for simulating *heterogeneous client hardware* in **Federated Learning** using the [Flower](https://flower.ai) framework.  
-It allows researchers to emulate clients with different CPU, GPU, and RAM capabilities **on a single physical machine** by enforcing hardware-level resource constraints at runtime.
+**BouquetFL** is a physical-layer emulation framework for **Federated Learning** built on top of [Flower](https://flower.ai). It simulates the full lifecycle of a worldwide federation — network transfers, hardware-constrained training, and failure modes like out-of-memory — on a single physical machine.
 
-BouquetFL is designed for studying realistic cross-device federated learning scenarios where client devices differ widely in computational power without requiring access to large, heterogeneous hardware testbeds. Each simulated client runs sequentially under a configurable hardware profile, enabling controlled and reproducible experimentation.
+Everything physical is emulated: GPU clocks, CPU frequency, memory limits, upload/download times, and inter-country latency. You bring your own training task; BouquetFL handles the rest.
 
-### Example: a federation round in action
+### A federation round in action
 
 ![BouquetFL round visualization](visuals/round_example.gif)
 
----
-
-## System Dependencies
-
-BouquetFL relies on several **system-level tools** to enforce hardware constraints. These must be installed outside of Python.
-
-### Operating System
-- **Ubuntu Linux** (tested on 22.04 / 24.04)
-
-### Required System Tools
-- **sudo access** (required to control hardware settings)
-- **NVIDIA GPU + CUDA**
-  - `nvidia-smi` (comes with NVIDIA drivers)
-- **cpupower** (CPU frequency control)
-- **systemd** (for memory cgroup limits)
-- **uv** (Python project runner)
-
-> Python dependencies (e.g., `flwr`, `torch`) are managed automatically via the project configuration.
+Each client downloads the global model, trains locally under its hardware constraints, and uploads the result — all with realistic timing derived from its assigned location and device profile.
 
 ---
 
-## Installation
+## How It Works
 
-### 1. Install system packages
+BouquetFL is an overlay on Flower. For each simulated client, it:
 
-```bash
-sudo apt update
-sudo apt install -y linux-tools-common linux-tools-generic cpupower systemd
-```
+1. **Assigns a hardware profile** (GPU, CPU, RAM) sampled from the [Steam Hardware Survey](https://store.steampowered.com/hwsurvey/)
+2. **Assigns a network location** (country) with real-world upload/download speeds and inter-country ping
+3. **Enforces hardware constraints** at the OS level: GPU memory/clock locking via `nvidia-smi`, CPU frequency via `cpupower`, RAM limits via cgroups
+4. **Estimates network overhead** (model upload/download time) based on model size, link speed, and latency
+5. **Handles failures** gracefully — OOM clients return the unmodified model
 
-### 2. Install NVIDIA drivers
+Clients run sequentially because hardware constraints (GPU clocks, CPU frequency) are global system settings.
 
-Follow NVIDIA’s official instructions for your GPU and Ubuntu version.
+---
 
-Verify the installation:
-```bash
-nvidia-smi
-```
+## Quick Start
 
-### 3. Install cpupower
-
-```bash
-sudo apt update
-sudo apt install linux-tools-$(uname -r) linux-tools-common
-```
-
-### 3. Install uv
-
-We rely on uv as its Python environment manager because system-level subprocesses are invoked through uv run to ensure a consistent runtime environment; users may substitute a different environment manager by adapting the corresponding command calls in the code.
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-Restart your shell and verify:
-```bash
-uv --version
-```
-
-### Running BouquetFL
-
-From the project root, run:
 ```bash
 flwr run .
 ```
 
-BouquetFL integrates directly into the standard Flower workflow.
+All federation-specific configuration lives in `pyproject.toml` — number of clients, rounds, model, learning rate, etc.
 
-### Running the dashboard
+On first run, you will be prompted for your sudo password (needed for `cpupower` and `nvidia-smi`). It is stored in the system keyring for subsequent runs.
 
-From the project root, run:
-```bash
-uv run tensorboard --logdir ~/runs --host 0.0.0.0 --port 6006
-```
-Connect in your browser to http://127.0.0.1:6006.
- 
-### First Run: sudo Password Handling
+---
 
-BouquetFL applies hardware limits using system-level tools such as cpupower and nvidia-smi, which require elevated privileges.
+## Client Hardware Config
 
-- On the first run, you will be prompted for your sudo password.
+Profiles are either **auto-sampled** from the hardware database or **manually defined** in `federation_client_hardware.toml`:
 
-- The password is stored securely using the system keyring.
+```toml
+[client_0]
+gpu    = "GeForce GTX 1080"
+cpu    = "Ryzen 3 3100"
+ram_gb = 16
+location = "Brazil"
 
-- Subsequent runs will not prompt again.
-
-### Example Hardware Configuration
-
-Client hardware profiles are defined using a YAML file:
-
-```yaml
-client_0:
-  cpu: Ryzen 3 3100
-  gpu: GeForce GTX 1080
-  ram_gb: 16
+[client_1]
+gpu    = "GeForce RTX 3060"
+cpu    = "Core i5-12400F"
+ram_gb = 32
+location = "Japan"
 ```
 
-BouquetFL uses these profiles to enforce corresponding CPU, GPU, and memory limits when spawning each client.
+If no config file is present, BouquetFL samples realistic profiles automatically — constrained to hardware the host machine can actually emulate (you can't simulate a GPU more powerful than the one you have).
 
-## Adapting BouquetFL to Your Training Project
+---
 
-BouquetFL is model- and task-agnostic. To use it with a custom dataset or model, simply add a project-specific task file to the `tasks/` directory. This file should contain the data loading logic, model initialization, and training loop for your application. During execution, BouquetFL invokes the task file specified in `pyproject.toml` and applies the hardware constraints configured in `config/federation_client_hardware.yaml`, allowing existing training code to run unchanged under simulated client hardware.
+## Bring Your Own Task
 
-### Notes & Limitations
+BouquetFL is model- and task-agnostic. Add a task file to `task/` that provides:
 
-Clients are executed sequentially due to global hardware settings.
+- `get_model()` — return a PyTorch model
+- `load_data(client_id, num_clients, num_workers, batch_size)` — return a DataLoader
+- `train(model, trainloader, epochs, device, lr)` — training loop
+- `test(model, testloader, device)` — evaluation loop
 
-BouquetFL cannot emulate hardware more powerful than the host machine.
+Set `experiment = "your_task"` in `pyproject.toml` and you're done. BouquetFL applies hardware constraints around your training code — no changes needed.
 
-GPU support currently requires NVIDIA hardware.
+---
 
+## Limitations
 
+- Requires **NVIDIA GPU + CUDA** and **Ubuntu Linux**
+- Clients execute **sequentially** (global hardware settings)
+- Cannot emulate hardware **more powerful** than the host machine
 
+---
 
+## License
 
-
-
+BouquetFL is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).

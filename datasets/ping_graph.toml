@@ -1,6 +1,6 @@
 # Ping graph — round-trip latency in milliseconds between location pairs.
 # The graph is undirected: an edge (A, B) covers both A→B and B→A.
-# Source: scraped real-world inter-city ping measurements.
+# Source: https://wondernetwork.com/pings.
 # Country names must match the "name" field in locations.toml.
 # schema_version: increment when adding/removing/renaming fields in [[edges]] entries.
 schema_version = 1

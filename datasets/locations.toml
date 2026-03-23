@@ -1,5 +1,5 @@
 # Network location profiles — upload/download speeds in Mbps
-# Source: placeholder values based on typical country averages (Speedtest Global Index)
+# Source: https://www.speedtest.net/global-index
 # Country names must match Natural Earth "NAME" field used by cartopy.
 # Add or edit entries to reflect your target federation scenario.
 # schema_version: increment when adding/removing/renaming fields in [[locations]] entries.
