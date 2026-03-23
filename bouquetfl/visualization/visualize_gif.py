@@ -272,7 +272,7 @@ def _render_frame(clients: list[VisualClient],
 def visualize_gif(
     hardware_config: dict,
     timings: dict | None = None,
-    server_location: str = "Germany",
+    server_location: str = "Luxembourg",
     output_path: str = "federation_round.gif",
     num_frames: int = 60,
     frame_duration_ms: int = 200,
@@ -303,7 +303,7 @@ def visualize_gif(
     # Build VisualClient objects
     clients: list[VisualClient] = []
     for client_key, profile in hardware_config.items():
-        location = profile.get("location", "Germany")
+        location = profile.get("location", "Luxembourg")
         speeds = _load_location_speeds(location)
         c_lon, c_lat = _random_point(location)
 
@@ -371,7 +371,7 @@ def visualize_gif(
 
 def make_train_metrics_aggr_fn(
     hardware_config: dict,
-    server_location: str = "Germany",
+    server_location: str = "Luxembourg",
     num_frames: int = 60,
     frame_duration_ms: int = 200,
 ):

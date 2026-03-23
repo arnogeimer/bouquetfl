@@ -1,281 +1,474 @@
 # Ping graph — round-trip latency in milliseconds between location pairs.
 # The graph is undirected: an edge (A, B) covers both A→B and B→A.
-# Source: placeholder values based on typical inter-country latencies.
+# Source: scraped real-world inter-city ping measurements.
 # Country names must match the "name" field in locations.toml.
 # schema_version: increment when adding/removing/renaming fields in [[edges]] entries.
 schema_version = 1
 
-
-# ── Intra-country (same location) ──────────────────────────────────────────
-
 [[edges]]
-from    = "United States of America"
-to      = "United States of America"
-ping_ms = 5.0
-
-[[edges]]
-from    = "Canada"
-to      = "Canada"
-ping_ms = 5.0
-
-[[edges]]
-from    = "United Kingdom"
-to      = "United Kingdom"
-ping_ms = 5.0
-
-[[edges]]
-from    = "Germany"
+from    = "Netherlands"
 to      = "Germany"
-ping_ms = 5.0
-
-[[edges]]
-from    = "France"
-to      = "France"
-ping_ms = 5.0
+ping_ms = 15.3
 
 [[edges]]
 from    = "Netherlands"
-to      = "Netherlands"
-ping_ms = 5.0
+to      = "Brazil"
+ping_ms = 254.3
 
 [[edges]]
-from    = "Sweden"
-to      = "Sweden"
-ping_ms = 5.0
+from    = "Netherlands"
+to      = "Argentina"
+ping_ms = 221.0
 
 [[edges]]
-from    = "China"
-to      = "China"
-ping_ms = 5.0
+from    = "Netherlands"
+to      = "South Africa"
+ping_ms = 152.0
 
 [[edges]]
-from    = "Japan"
-to      = "Japan"
-ping_ms = 5.0
+from    = "Netherlands"
+to      = "Nigeria"
+ping_ms = 109.7
 
 [[edges]]
-from    = "South Korea"
-to      = "South Korea"
-ping_ms = 5.0
+from    = "Netherlands"
+to      = "United Kingdom"
+ping_ms = 8.1
 
 [[edges]]
-from    = "India"
+from    = "Netherlands"
+to      = "Luxembourg"
+ping_ms = 12.8
+
+[[edges]]
+from    = "Netherlands"
 to      = "India"
-ping_ms = 5.0
+ping_ms = 192.1
 
 [[edges]]
-from    = "Singapore"
+from    = "Netherlands"
+to      = "France"
+ping_ms = 22.5
+
+[[edges]]
+from    = "Netherlands"
+to      = "South Korea"
+ping_ms = 280.6
+
+[[edges]]
+from    = "Netherlands"
+to      = "China"
+ping_ms = 230.6
+
+[[edges]]
+from    = "Netherlands"
 to      = "Singapore"
-ping_ms = 5.0
+ping_ms = 157.0
+
+[[edges]]
+from    = "Netherlands"
+to      = "Sweden"
+ping_ms = 28.6
+
+[[edges]]
+from    = "Netherlands"
+to      = "Australia"
+ping_ms = 251.6
+
+[[edges]]
+from    = "Netherlands"
+to      = "Japan"
+ping_ms = 234.9
+
+[[edges]]
+from    = "Netherlands"
+to      = "Canada"
+ping_ms = 96.0
+
+[[edges]]
+from    = "Netherlands"
+to      = "United States of America"
+ping_ms = 93.0
+
+[[edges]]
+from    = "Germany"
+to      = "Brazil"
+ping_ms = 246.1
+
+[[edges]]
+from    = "Germany"
+to      = "Argentina"
+ping_ms = 228.6
+
+[[edges]]
+from    = "Germany"
+to      = "South Africa"
+ping_ms = 161.5
+
+[[edges]]
+from    = "Germany"
+to      = "Nigeria"
+ping_ms = 118.7
+
+[[edges]]
+from    = "Germany"
+to      = "United Kingdom"
+ping_ms = 23.7
+
+[[edges]]
+from    = "Germany"
+to      = "Luxembourg"
+ping_ms = 18.8
+
+[[edges]]
+from    = "Germany"
+to      = "India"
+ping_ms = 159.8
+
+[[edges]]
+from    = "Germany"
+to      = "France"
+ping_ms = 20.0
+
+[[edges]]
+from    = "Germany"
+to      = "South Korea"
+ping_ms = 296.4
+
+[[edges]]
+from    = "Germany"
+to      = "China"
+ping_ms = 182.4
+
+[[edges]]
+from    = "Germany"
+to      = "Singapore"
+ping_ms = 166.7
+
+[[edges]]
+from    = "Germany"
+to      = "Sweden"
+ping_ms = 25.3
+
+[[edges]]
+from    = "Germany"
+to      = "Australia"
+ping_ms = 277.1
+
+[[edges]]
+from    = "Germany"
+to      = "Japan"
+ping_ms = 260.3
+
+[[edges]]
+from    = "Germany"
+to      = "Canada"
+ping_ms = 108.2
+
+[[edges]]
+from    = "Germany"
+to      = "United States of America"
+ping_ms = 94.5
 
 [[edges]]
 from    = "Brazil"
-to      = "Brazil"
-ping_ms = 5.0
+to      = "Argentina"
+ping_ms = 45.3
+
+[[edges]]
+from    = "Brazil"
+to      = "South Africa"
+ping_ms = 397.2
+
+[[edges]]
+from    = "Brazil"
+to      = "Nigeria"
+ping_ms = 308.4
+
+[[edges]]
+from    = "Brazil"
+to      = "United Kingdom"
+ping_ms = 232.3
+
+[[edges]]
+from    = "Brazil"
+to      = "Luxembourg"
+ping_ms = 231.0
+
+[[edges]]
+from    = "Brazil"
+to      = "India"
+ping_ms = 361.6
+
+[[edges]]
+from    = "Brazil"
+to      = "France"
+ping_ms = 248.2
+
+[[edges]]
+from    = "Brazil"
+to      = "South Korea"
+ping_ms = 358.5
+
+[[edges]]
+from    = "Brazil"
+to      = "China"
+ping_ms = 431.1
+
+[[edges]]
+from    = "Brazil"
+to      = "Singapore"
+ping_ms = 362.9
+
+[[edges]]
+from    = "Brazil"
+to      = "Sweden"
+ping_ms = 254.1
+
+[[edges]]
+from    = "Brazil"
+to      = "Australia"
+ping_ms = 369.5
+
+[[edges]]
+from    = "Brazil"
+to      = "Japan"
+ping_ms = 296.7
+
+[[edges]]
+from    = "Brazil"
+to      = "Canada"
+ping_ms = 160.1
+
+[[edges]]
+from    = "Brazil"
+to      = "United States of America"
+ping_ms = 136.7
 
 [[edges]]
 from    = "Argentina"
-to      = "Argentina"
-ping_ms = 5.0
+to      = "South Africa"
+ping_ms = 346.9
+
+[[edges]]
+from    = "Argentina"
+to      = "Nigeria"
+ping_ms = 306.6
+
+[[edges]]
+from    = "Argentina"
+to      = "United Kingdom"
+ping_ms = 225.2
+
+[[edges]]
+from    = "Argentina"
+to      = "Luxembourg"
+ping_ms = 222.2
+
+[[edges]]
+from    = "Argentina"
+to      = "India"
+ping_ms = 446.6
+
+[[edges]]
+from    = "Argentina"
+to      = "France"
+ping_ms = 226.8
+
+[[edges]]
+from    = "Argentina"
+to      = "South Korea"
+ping_ms = 330.1
+
+[[edges]]
+from    = "Argentina"
+to      = "China"
+ping_ms = 345.2
+
+[[edges]]
+from    = "Argentina"
+to      = "Singapore"
+ping_ms = 353.6
+
+[[edges]]
+from    = "Argentina"
+to      = "Sweden"
+ping_ms = 242.0
+
+[[edges]]
+from    = "Argentina"
+to      = "Australia"
+ping_ms = 341.6
+
+[[edges]]
+from    = "Argentina"
+to      = "Japan"
+ping_ms = 283.6
+
+[[edges]]
+from    = "Argentina"
+to      = "Canada"
+ping_ms = 173.5
+
+[[edges]]
+from    = "Argentina"
+to      = "United States of America"
+ping_ms = 139.5
 
 [[edges]]
 from    = "South Africa"
-to      = "South Africa"
-ping_ms = 5.0
+to      = "Nigeria"
+ping_ms = 242.7
+
+[[edges]]
+from    = "South Africa"
+to      = "United Kingdom"
+ping_ms = 142.5
+
+[[edges]]
+from    = "South Africa"
+to      = "Luxembourg"
+ping_ms = 156.2
+
+[[edges]]
+from    = "South Africa"
+to      = "India"
+ping_ms = 334.8
+
+[[edges]]
+from    = "South Africa"
+to      = "France"
+ping_ms = 149.7
+
+[[edges]]
+from    = "South Africa"
+to      = "South Korea"
+ping_ms = 427.4
+
+[[edges]]
+from    = "South Africa"
+to      = "China"
+ping_ms = 328.5
+
+[[edges]]
+from    = "South Africa"
+to      = "Singapore"
+ping_ms = 314.1
+
+[[edges]]
+from    = "South Africa"
+to      = "Sweden"
+ping_ms = 169.4
+
+[[edges]]
+from    = "South Africa"
+to      = "Australia"
+ping_ms = 399.9
+
+[[edges]]
+from    = "South Africa"
+to      = "Japan"
+ping_ms = 377.3
+
+[[edges]]
+from    = "South Africa"
+to      = "Canada"
+ping_ms = 231.9
+
+[[edges]]
+from    = "South Africa"
+to      = "United States of America"
+ping_ms = 223.6
 
 [[edges]]
 from    = "Nigeria"
-to      = "Nigeria"
-ping_ms = 5.0
+to      = "United Kingdom"
+ping_ms = 114.0
 
 [[edges]]
-from    = "Australia"
+from    = "Nigeria"
+to      = "Luxembourg"
+ping_ms = 119.5
+
+[[edges]]
+from    = "Nigeria"
+to      = "India"
+ping_ms = 265.3
+
+[[edges]]
+from    = "Nigeria"
+to      = "France"
+ping_ms = 104.3
+
+[[edges]]
+from    = "Nigeria"
+to      = "South Korea"
+ping_ms = 374.2
+
+[[edges]]
+from    = "Nigeria"
+to      = "China"
+ping_ms = 327.3
+
+[[edges]]
+from    = "Nigeria"
+to      = "Singapore"
+ping_ms = 242.5
+
+[[edges]]
+from    = "Nigeria"
+to      = "Sweden"
+ping_ms = 129.9
+
+[[edges]]
+from    = "Nigeria"
 to      = "Australia"
-ping_ms = 5.0
-
-# ── North America ───────────────────────────────────────────────────────────
+ping_ms = 336.0
 
 [[edges]]
-from    = "United States of America"
+from    = "Nigeria"
+to      = "Japan"
+ping_ms = 339.8
+
+[[edges]]
+from    = "Nigeria"
 to      = "Canada"
-ping_ms = 20.0
-
-# ── North America → Europe ──────────────────────────────────────────────────
+ping_ms = 197.5
 
 [[edges]]
-from    = "United States of America"
-to      = "United Kingdom"
-ping_ms = 80.0
+from    = "Nigeria"
+to      = "United States of America"
+ping_ms = 175.4
 
 [[edges]]
-from    = "United States of America"
-to      = "Germany"
-ping_ms = 90.0
+from    = "United Kingdom"
+to      = "Luxembourg"
+ping_ms = 17.6
 
 [[edges]]
-from    = "United States of America"
-to      = "France"
-ping_ms = 88.0
-
-[[edges]]
-from    = "United States of America"
-to      = "Netherlands"
-ping_ms = 85.0
-
-[[edges]]
-from    = "United States of America"
-to      = "Sweden"
-ping_ms = 100.0
-
-[[edges]]
-from    = "Canada"
-to      = "United Kingdom"
-ping_ms = 85.0
-
-[[edges]]
-from    = "Canada"
-to      = "Germany"
-ping_ms = 95.0
-
-[[edges]]
-from    = "Canada"
-to      = "France"
-ping_ms = 92.0
-
-[[edges]]
-from    = "Canada"
-to      = "Netherlands"
-ping_ms = 90.0
-
-[[edges]]
-from    = "Canada"
-to      = "Sweden"
-ping_ms = 105.0
-
-# ── North America → Asia ────────────────────────────────────────────────────
-
-[[edges]]
-from    = "United States of America"
-to      = "China"
-ping_ms = 170.0
-
-[[edges]]
-from    = "United States of America"
-to      = "Japan"
-ping_ms = 140.0
-
-[[edges]]
-from    = "United States of America"
-to      = "South Korea"
-ping_ms = 145.0
-
-[[edges]]
-from    = "United States of America"
+from    = "United Kingdom"
 to      = "India"
-ping_ms = 180.0
-
-[[edges]]
-from    = "United States of America"
-to      = "Singapore"
-ping_ms = 170.0
-
-[[edges]]
-from    = "Canada"
-to      = "China"
-ping_ms = 175.0
-
-[[edges]]
-from    = "Canada"
-to      = "Japan"
-ping_ms = 145.0
-
-[[edges]]
-from    = "Canada"
-to      = "South Korea"
-ping_ms = 150.0
-
-[[edges]]
-from    = "Canada"
-to      = "India"
-ping_ms = 185.0
-
-[[edges]]
-from    = "Canada"
-to      = "Singapore"
-ping_ms = 175.0
-
-# ── North America → South America ───────────────────────────────────────────
-
-[[edges]]
-from    = "United States of America"
-to      = "Brazil"
-ping_ms = 110.0
-
-[[edges]]
-from    = "United States of America"
-to      = "Argentina"
-ping_ms = 130.0
-
-[[edges]]
-from    = "Canada"
-to      = "Brazil"
-ping_ms = 120.0
-
-[[edges]]
-from    = "Canada"
-to      = "Argentina"
-ping_ms = 140.0
-
-# ── North America → Africa ──────────────────────────────────────────────────
-
-[[edges]]
-from    = "United States of America"
-to      = "South Africa"
-ping_ms = 180.0
-
-[[edges]]
-from    = "United States of America"
-to      = "Nigeria"
-ping_ms = 160.0
-
-[[edges]]
-from    = "Canada"
-to      = "South Africa"
-ping_ms = 190.0
-
-[[edges]]
-from    = "Canada"
-to      = "Nigeria"
-ping_ms = 165.0
-
-# ── North America → Australia ───────────────────────────────────────────────
-
-[[edges]]
-from    = "United States of America"
-to      = "Australia"
-ping_ms = 160.0
-
-[[edges]]
-from    = "Canada"
-to      = "Australia"
-ping_ms = 165.0
-
-# ── Intra-Europe ────────────────────────────────────────────────────────────
-
-[[edges]]
-from    = "United Kingdom"
-to      = "Germany"
-ping_ms = 20.0
+ping_ms = 158.9
 
 [[edges]]
 from    = "United Kingdom"
 to      = "France"
-ping_ms = 15.0
+ping_ms = 11.4
 
 [[edges]]
 from    = "United Kingdom"
-to      = "Netherlands"
-ping_ms = 12.0
+to      = "South Korea"
+ping_ms = 268.0
+
+[[edges]]
+from    = "United Kingdom"
+to      = "China"
+ping_ms = 181.7
+
+[[edges]]
+from    = "United Kingdom"
+to      = "Singapore"
+ping_ms = 162.9
 
 [[edges]]
 from    = "United Kingdom"
@@ -283,532 +476,296 @@ to      = "Sweden"
 ping_ms = 25.0
 
 [[edges]]
-from    = "Germany"
+from    = "United Kingdom"
+to      = "Australia"
+ping_ms = 266.2
+
+[[edges]]
+from    = "United Kingdom"
+to      = "Japan"
+ping_ms = 245.3
+
+[[edges]]
+from    = "United Kingdom"
+to      = "Canada"
+ping_ms = 88.7
+
+[[edges]]
+from    = "United Kingdom"
+to      = "United States of America"
+ping_ms = 79.5
+
+[[edges]]
+from    = "Luxembourg"
+to      = "India"
+ping_ms = 173.6
+
+[[edges]]
+from    = "Luxembourg"
 to      = "France"
-ping_ms = 15.0
+ping_ms = 7.9
 
 [[edges]]
-from    = "Germany"
-to      = "Netherlands"
-ping_ms = 10.0
+from    = "Luxembourg"
+to      = "South Korea"
+ping_ms = 286.7
 
 [[edges]]
-from    = "Germany"
+from    = "Luxembourg"
+to      = "China"
+ping_ms = 241.3
+
+[[edges]]
+from    = "Luxembourg"
+to      = "Singapore"
+ping_ms = 162.6
+
+[[edges]]
+from    = "Luxembourg"
 to      = "Sweden"
-ping_ms = 20.0
+ping_ms = 27.4
 
 [[edges]]
-from    = "France"
-to      = "Netherlands"
-ping_ms = 12.0
+from    = "Luxembourg"
+to      = "Australia"
+ping_ms = 248.7
 
 [[edges]]
-from    = "France"
+from    = "Luxembourg"
+to      = "Japan"
+ping_ms = 253.4
+
+[[edges]]
+from    = "Luxembourg"
+to      = "Canada"
+ping_ms = 102.8
+
+[[edges]]
+from    = "Luxembourg"
+to      = "United States of America"
+ping_ms = 92.3
+
+[[edges]]
+from    = "India"
+to      = "France"
+ping_ms = 191.0
+
+[[edges]]
+from    = "India"
+to      = "South Korea"
+ping_ms = 138.9
+
+[[edges]]
+from    = "India"
+to      = "China"
+ping_ms = 352.5
+
+[[edges]]
+from    = "India"
+to      = "Singapore"
+ping_ms = 72.3
+
+[[edges]]
+from    = "India"
 to      = "Sweden"
-ping_ms = 22.0
+ping_ms = 204.7
 
 [[edges]]
-from    = "Netherlands"
-to      = "Sweden"
-ping_ms = 18.0
-
-# ── Europe → Asia ───────────────────────────────────────────────────────────
+from    = "India"
+to      = "Australia"
+ping_ms = 159.2
 
 [[edges]]
-from    = "United Kingdom"
-to      = "China"
-ping_ms = 170.0
-
-[[edges]]
-from    = "United Kingdom"
+from    = "India"
 to      = "Japan"
-ping_ms = 165.0
-
-[[edges]]
-from    = "United Kingdom"
-to      = "South Korea"
-ping_ms = 170.0
-
-[[edges]]
-from    = "United Kingdom"
-to      = "India"
-ping_ms = 120.0
-
-[[edges]]
-from    = "United Kingdom"
-to      = "Singapore"
-ping_ms = 160.0
-
-[[edges]]
-from    = "Germany"
-to      = "China"
-ping_ms = 165.0
-
-[[edges]]
-from    = "Germany"
-to      = "Japan"
-ping_ms = 160.0
-
-[[edges]]
-from    = "Germany"
-to      = "South Korea"
-ping_ms = 165.0
-
-[[edges]]
-from    = "Germany"
-to      = "India"
-ping_ms = 115.0
-
-[[edges]]
-from    = "Germany"
-to      = "Singapore"
-ping_ms = 155.0
-
-[[edges]]
-from    = "France"
-to      = "China"
-ping_ms = 165.0
-
-[[edges]]
-from    = "France"
-to      = "Japan"
-ping_ms = 162.0
-
-[[edges]]
-from    = "France"
-to      = "South Korea"
-ping_ms = 167.0
-
-[[edges]]
-from    = "France"
-to      = "India"
-ping_ms = 118.0
-
-[[edges]]
-from    = "France"
-to      = "Singapore"
-ping_ms = 158.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "China"
-ping_ms = 162.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "Japan"
-ping_ms = 158.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "South Korea"
-ping_ms = 163.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "India"
-ping_ms = 113.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "Singapore"
-ping_ms = 152.0
-
-[[edges]]
-from    = "Sweden"
-to      = "China"
-ping_ms = 170.0
-
-[[edges]]
-from    = "Sweden"
-to      = "Japan"
-ping_ms = 165.0
-
-[[edges]]
-from    = "Sweden"
-to      = "South Korea"
-ping_ms = 170.0
-
-[[edges]]
-from    = "Sweden"
-to      = "India"
-ping_ms = 120.0
-
-[[edges]]
-from    = "Sweden"
-to      = "Singapore"
-ping_ms = 160.0
-
-# ── Europe → South America ──────────────────────────────────────────────────
-
-[[edges]]
-from    = "United Kingdom"
-to      = "Brazil"
-ping_ms = 130.0
-
-[[edges]]
-from    = "United Kingdom"
-to      = "Argentina"
-ping_ms = 150.0
-
-[[edges]]
-from    = "Germany"
-to      = "Brazil"
 ping_ms = 135.0
 
 [[edges]]
-from    = "Germany"
-to      = "Argentina"
-ping_ms = 155.0
+from    = "India"
+to      = "Canada"
+ping_ms = 317.1
+
+[[edges]]
+from    = "India"
+to      = "United States of America"
+ping_ms = 301.2
 
 [[edges]]
 from    = "France"
-to      = "Brazil"
-ping_ms = 125.0
+to      = "South Korea"
+ping_ms = 279.0
 
 [[edges]]
 from    = "France"
-to      = "Argentina"
-ping_ms = 145.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "Brazil"
-ping_ms = 130.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "Argentina"
-ping_ms = 150.0
-
-[[edges]]
-from    = "Sweden"
-to      = "Brazil"
-ping_ms = 140.0
-
-[[edges]]
-from    = "Sweden"
-to      = "Argentina"
-ping_ms = 160.0
-
-# ── Europe → Africa ─────────────────────────────────────────────────────────
-
-[[edges]]
-from    = "United Kingdom"
-to      = "South Africa"
-ping_ms = 150.0
-
-[[edges]]
-from    = "United Kingdom"
-to      = "Nigeria"
-ping_ms = 80.0
-
-[[edges]]
-from    = "Germany"
-to      = "South Africa"
-ping_ms = 155.0
-
-[[edges]]
-from    = "Germany"
-to      = "Nigeria"
-ping_ms = 85.0
+to      = "China"
+ping_ms = 228.9
 
 [[edges]]
 from    = "France"
-to      = "South Africa"
-ping_ms = 152.0
+to      = "Singapore"
+ping_ms = 145.9
 
 [[edges]]
 from    = "France"
-to      = "Nigeria"
-ping_ms = 75.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "South Africa"
-ping_ms = 153.0
-
-[[edges]]
-from    = "Netherlands"
-to      = "Nigeria"
-ping_ms = 82.0
-
-[[edges]]
-from    = "Sweden"
-to      = "South Africa"
-ping_ms = 160.0
-
-[[edges]]
-from    = "Sweden"
-to      = "Nigeria"
-ping_ms = 90.0
-
-# ── Europe → Australia ──────────────────────────────────────────────────────
-
-[[edges]]
-from    = "United Kingdom"
-to      = "Australia"
-ping_ms = 280.0
-
-[[edges]]
-from    = "Germany"
-to      = "Australia"
-ping_ms = 285.0
+to      = "Sweden"
+ping_ms = 28.3
 
 [[edges]]
 from    = "France"
 to      = "Australia"
-ping_ms = 283.0
+ping_ms = 241.9
 
 [[edges]]
-from    = "Netherlands"
-to      = "Australia"
-ping_ms = 282.0
+from    = "France"
+to      = "Japan"
+ping_ms = 232.5
 
 [[edges]]
-from    = "Sweden"
-to      = "Australia"
-ping_ms = 290.0
+from    = "France"
+to      = "Canada"
+ping_ms = 96.8
 
-# ── Intra-Asia ──────────────────────────────────────────────────────────────
+[[edges]]
+from    = "France"
+to      = "United States of America"
+ping_ms = 79.1
+
+[[edges]]
+from    = "South Korea"
+to      = "China"
+ping_ms = 138.5
+
+[[edges]]
+from    = "South Korea"
+to      = "Singapore"
+ping_ms = 65.3
+
+[[edges]]
+from    = "South Korea"
+to      = "Sweden"
+ping_ms = 295.5
+
+[[edges]]
+from    = "South Korea"
+to      = "Australia"
+ping_ms = 153.8
+
+[[edges]]
+from    = "South Korea"
+to      = "Japan"
+ping_ms = 31.3
+
+[[edges]]
+from    = "South Korea"
+to      = "Canada"
+ping_ms = 199.8
+
+[[edges]]
+from    = "South Korea"
+to      = "United States of America"
+ping_ms = 179.3
+
+[[edges]]
+from    = "China"
+to      = "Singapore"
+ping_ms = 352.1
+
+[[edges]]
+from    = "China"
+to      = "Sweden"
+ping_ms = 190.2
+
+[[edges]]
+from    = "China"
+to      = "Australia"
+ping_ms = 293.1
 
 [[edges]]
 from    = "China"
 to      = "Japan"
-ping_ms = 50.0
+ping_ms = 297.2
 
 [[edges]]
 from    = "China"
-to      = "South Korea"
-ping_ms = 40.0
+to      = "Canada"
+ping_ms = 223.1
 
 [[edges]]
 from    = "China"
-to      = "India"
-ping_ms = 80.0
-
-[[edges]]
-from    = "China"
-to      = "Singapore"
-ping_ms = 60.0
-
-[[edges]]
-from    = "Japan"
-to      = "South Korea"
-ping_ms = 25.0
-
-[[edges]]
-from    = "Japan"
-to      = "India"
-ping_ms = 110.0
-
-[[edges]]
-from    = "Japan"
-to      = "Singapore"
-ping_ms = 70.0
-
-[[edges]]
-from    = "South Korea"
-to      = "India"
-ping_ms = 115.0
-
-[[edges]]
-from    = "South Korea"
-to      = "Singapore"
-ping_ms = 75.0
-
-[[edges]]
-from    = "India"
-to      = "Singapore"
-ping_ms = 60.0
-
-# ── Asia → South America ────────────────────────────────────────────────────
-
-[[edges]]
-from    = "China"
-to      = "Brazil"
-ping_ms = 240.0
-
-[[edges]]
-from    = "China"
-to      = "Argentina"
-ping_ms = 260.0
-
-[[edges]]
-from    = "Japan"
-to      = "Brazil"
-ping_ms = 250.0
-
-[[edges]]
-from    = "Japan"
-to      = "Argentina"
-ping_ms = 270.0
-
-[[edges]]
-from    = "South Korea"
-to      = "Brazil"
-ping_ms = 250.0
-
-[[edges]]
-from    = "South Korea"
-to      = "Argentina"
-ping_ms = 270.0
-
-[[edges]]
-from    = "India"
-to      = "Brazil"
-ping_ms = 220.0
-
-[[edges]]
-from    = "India"
-to      = "Argentina"
-ping_ms = 240.0
+to      = "United States of America"
+ping_ms = 211.1
 
 [[edges]]
 from    = "Singapore"
-to      = "Brazil"
-ping_ms = 230.0
-
-[[edges]]
-from    = "Singapore"
-to      = "Argentina"
-ping_ms = 250.0
-
-# ── Asia → Africa ───────────────────────────────────────────────────────────
-
-[[edges]]
-from    = "China"
-to      = "South Africa"
-ping_ms = 190.0
-
-[[edges]]
-from    = "China"
-to      = "Nigeria"
-ping_ms = 200.0
-
-[[edges]]
-from    = "Japan"
-to      = "South Africa"
-ping_ms = 200.0
-
-[[edges]]
-from    = "Japan"
-to      = "Nigeria"
-ping_ms = 210.0
-
-[[edges]]
-from    = "South Korea"
-to      = "South Africa"
-ping_ms = 200.0
-
-[[edges]]
-from    = "South Korea"
-to      = "Nigeria"
-ping_ms = 210.0
-
-[[edges]]
-from    = "India"
-to      = "South Africa"
-ping_ms = 150.0
-
-[[edges]]
-from    = "India"
-to      = "Nigeria"
-ping_ms = 160.0
-
-[[edges]]
-from    = "Singapore"
-to      = "South Africa"
-ping_ms = 180.0
-
-[[edges]]
-from    = "Singapore"
-to      = "Nigeria"
-ping_ms = 190.0
-
-# ── Asia → Australia ────────────────────────────────────────────────────────
-
-[[edges]]
-from    = "China"
-to      = "Australia"
-ping_ms = 120.0
-
-[[edges]]
-from    = "Japan"
-to      = "Australia"
-ping_ms = 100.0
-
-[[edges]]
-from    = "South Korea"
-to      = "Australia"
-ping_ms = 105.0
-
-[[edges]]
-from    = "India"
-to      = "Australia"
-ping_ms = 130.0
+to      = "Sweden"
+ping_ms = 178.2
 
 [[edges]]
 from    = "Singapore"
 to      = "Australia"
-ping_ms = 90.0
-
-# ── Intra-South America ──────────────────────────────────────────────────────
+ping_ms = 92.0
 
 [[edges]]
-from    = "Brazil"
-to      = "Argentina"
-ping_ms = 30.0
-
-# ── South America → Africa ──────────────────────────────────────────────────
+from    = "Singapore"
+to      = "Japan"
+ping_ms = 67.7
 
 [[edges]]
-from    = "Brazil"
-to      = "South Africa"
-ping_ms = 170.0
+from    = "Singapore"
+to      = "Canada"
+ping_ms = 249.6
 
 [[edges]]
-from    = "Brazil"
-to      = "Nigeria"
-ping_ms = 160.0
+from    = "Singapore"
+to      = "United States of America"
+ping_ms = 205.6
 
 [[edges]]
-from    = "Argentina"
-to      = "South Africa"
-ping_ms = 180.0
-
-[[edges]]
-from    = "Argentina"
-to      = "Nigeria"
-ping_ms = 175.0
-
-# ── South America → Australia ────────────────────────────────────────────────
-
-[[edges]]
-from    = "Brazil"
+from    = "Sweden"
 to      = "Australia"
-ping_ms = 260.0
+ping_ms = 283.7
 
 [[edges]]
-from    = "Argentina"
-to      = "Australia"
-ping_ms = 250.0
-
-# ── Intra-Africa ────────────────────────────────────────────────────────────
+from    = "Sweden"
+to      = "Japan"
+ping_ms = 294.9
 
 [[edges]]
-from    = "South Africa"
-to      = "Nigeria"
-ping_ms = 60.0
-
-# ── Africa → Australia ──────────────────────────────────────────────────────
+from    = "Sweden"
+to      = "Canada"
+ping_ms = 114.6
 
 [[edges]]
-from    = "South Africa"
-to      = "Australia"
-ping_ms = 200.0
+from    = "Sweden"
+to      = "United States of America"
+ping_ms = 110.1
 
 [[edges]]
-from    = "Nigeria"
-to      = "Australia"
-ping_ms = 220.0
+from    = "Australia"
+to      = "Japan"
+ping_ms = 98.5
+
+[[edges]]
+from    = "Australia"
+to      = "Canada"
+ping_ms = 198.3
+
+[[edges]]
+from    = "Australia"
+to      = "United States of America"
+ping_ms = 198.3
+
+[[edges]]
+from    = "Japan"
+to      = "Canada"
+ping_ms = 166.0
+
+[[edges]]
+from    = "Japan"
+to      = "United States of America"
+ping_ms = 144.2
+
+[[edges]]
+from    = "Canada"
+to      = "United States of America"
+ping_ms = 25.7

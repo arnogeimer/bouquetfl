@@ -59,7 +59,7 @@ def main(grid: Grid, context: Context) -> None:
     # Render world-map visualisation (requires cartopy + matplotlib)
     try:
         from bouquetfl.visualization.visualize_federation import visualize
-        server_location = run_config.get("server-location", "Germany")
+        server_location = run_config.get("server-location", "Luxembourg")
         visualize(hardware_config, server_location=server_location)
     except ImportError:
         print("[server] skipping map visualisation (cartopy / matplotlib not installed)")
@@ -68,7 +68,7 @@ def main(grid: Grid, context: Context) -> None:
     train_metrics_aggr_fn = None
     try:
         from bouquetfl.visualization.visualize_gif import make_train_metrics_aggr_fn
-        server_location = run_config.get("server-location", "Germany")
+        server_location = run_config.get("server-location", "Luxembourg")
         train_metrics_aggr_fn = make_train_metrics_aggr_fn(
             hardware_config, server_location=server_location,
         )

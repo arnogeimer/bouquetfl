@@ -261,7 +261,7 @@ def run_emulation(
         # 14. Estimate upload/download times from model size + location speeds
         # ------------------------------------------------------------------
         client_location = hardware_profile.get("location", "Europe")
-        server_location = config.get("server-location", "Germany")
+        server_location = config.get("server-location", "Luxembourg")
         model_size_mb   = estimate_model_size_mb(state_dict)
         client_speeds   = get_location_speeds(client_location)
         ping_ms         = get_ping(client_location, server_location)

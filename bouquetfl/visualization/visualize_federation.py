@@ -124,7 +124,7 @@ def _load_location_speeds(location: str) -> dict:
 
 def visualize(
     hardware_config: dict,
-    server_location: str = "Germany",
+    server_location: str = "Luxembourg",
     output_path: str = "federation_map.pdf",
 ) -> None:
     """Render a world map of the federation and save it to output_path.
@@ -158,7 +158,7 @@ def visualize(
 
     # Clients
     for client_key, profile in hardware_config.items():
-        location = profile.get("location", "Germany")
+        location = profile.get("location", "Luxembourg")
         speeds       = _load_location_speeds(location)
         c_lon, c_lat = _random_point(location)
 
