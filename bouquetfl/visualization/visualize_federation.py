@@ -16,6 +16,7 @@ Optional dependency (not in main pyproject.toml):
 
 import random
 import tomllib
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -125,7 +126,7 @@ def _load_location_speeds(location: str) -> dict:
 def visualize(
     hardware_config: dict,
     server_location: str = "Luxembourg",
-    output_path: str = "federation_map.pdf",
+    output_path: str = "visuals/federation_map.pdf",
 ) -> None:
     """Render a world map of the federation and save it to output_path.
 
@@ -194,6 +195,7 @@ def visualize(
     ax.set_title("BouquetFL — Federation Hardware Map", fontsize=14, pad=10)
 
     plt.tight_layout()
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     print(f"[visualize] saved to {output_path}")
     plt.close(fig)

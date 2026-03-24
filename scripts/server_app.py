@@ -3,6 +3,7 @@
 import json
 import os
 import tomllib
+from pathlib import Path
 
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
@@ -22,6 +23,8 @@ HARDWARE_CONFIG_PATH = "federation_client_hardware.toml"
 @app.main()
 def main(grid: Grid, context: Context) -> None:
     """Main entry point for the ServerApp."""
+
+    Path("visuals").mkdir(exist_ok=True)
 
     run_config      = context.run_config
     num_rounds:  int   = run_config["num-server-rounds"]

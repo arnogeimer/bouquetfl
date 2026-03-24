@@ -192,9 +192,8 @@ def _render_frame(clients: list[VisualClient],
     for vc in clients:
         phase, frac = vc.phase_at(t)
 
-        # Client dot
-        dot_color = _PHASE_COLORS.get(phase, "#2255cc")
-        ax.plot(vc.lon, vc.lat, "o", color=dot_color, markersize=9,
+        # Client dot (always blue)
+        ax.plot(vc.lon, vc.lat, "o", color="#2255cc", markersize=9,
                 transform=ccrs.PlateCarree(), zorder=5)
 
         # Static dim arc (background track)
@@ -418,8 +417,8 @@ def make_train_metrics_aggr_fn(
         # --- Generate round GIF ---
         try:
             from pathlib import Path
-            Path("plots").mkdir(exist_ok=True)
-            output_path = f"plots/round_{server_round}.gif"
+            Path("visuals").mkdir(exist_ok=True)
+            output_path = f"visuals/round_{server_round}.gif"
             visualize_gif(
                 hardware_config,
                 timings=timings,
